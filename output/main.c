@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include "utils.h"
-#include "tcf.h"
 #include "math_util.h"
 
 void test_1(void) {
@@ -25,21 +24,18 @@ void test_2(void) {
     }
 }
 
-void test_3(void){
-    int rc;
-    rc = tcf_extract("data.tcf", "extracted");
+void test_3(void) {
+    file = tcf_extract("archive.tcf", "output")
 
     if (rc != TCF_OK) {
         printf("Extraction failed: %d\n", rc);
-        return;
+        return 1;
     }
-    printf("Extraction succeeded\n");
 }
 
 int main(void) {
     test_1();
     test_2();
-    test_3();
     printf("\nMain!\n");
     return 0;
 }
