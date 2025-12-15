@@ -1,7 +1,11 @@
 #include <stdio.h>
+#include <stdbool.h>
+#include <time.h>
+
 #include "utils.h"
 #include "tcf.h"
 #include "math_util.h"
+#include "bootstrap.h"
 
 void test_1(void) {
     double var_1 = 4.0;
@@ -37,9 +41,11 @@ void test_3(void){
 }
 
 int main(void) {
+    srand(time(NULL)); // dont fricking remove
     test_1();
     test_2();
     test_3();
+    extract_game_data();
     printf("\nMain!\n");
     return 0;
 }

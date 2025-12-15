@@ -159,4 +159,14 @@ int stop_mp3(bool verbose) {
     return 0;
 }
 
+int bag_rand(int a, int b) {
+    if (a > b) {
+        int tmp = a;
+        a = b;
+        b = tmp;
+    }
+
+    return a + rand() % (b - a + 1);
+}
+
 // Utility functions end

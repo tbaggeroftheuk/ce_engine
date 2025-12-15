@@ -24,4 +24,5 @@ char input_char(const char *prompt);
 void input_string(const char *prompt, char *output, size_t size);
 int play_mp3(const char *filename, bool verbose);
 int stop_mp3(bool verbose);
+int bag_rand(int a, int b);
 #endif // UTILS_H
