@@ -4,15 +4,20 @@ SRC_DIR = source
 INCLUDE_DIR = include
 ASSET_FOLDER = assets
 SCRIPT_FOLDER = scripts
-SRC = $(wildcard $(SRC_DIR)/*.c)
+
+# Recursively find all .c files
+SRC = $(shell find $(SRC_DIR) -type f -name '*.c')
 EXE = $(TARGET)
 
-# === Compiler/Linker Settings ===
+# === Compiler Selection ===
+# Default compiler
+CC ?= clang
+
+# Windows cross-compile override
 ifeq ($(OS),Windows_NT)
-	CC = x86_64-w64-mingw32-gcc
+	CC ?= x86_64-w64-mingw32-gcc
 	SUBSYSTEM = -mconsole
 else
-	CC = gcc
 	SUBSYSTEM =
 endif
 
@@ -31,7 +36,13 @@ run: $(EXE)
 	./$(EXE)
 
 clean:
-	rm -f $(EXE)
+	rm -f $(EXE) data.tcf
 
 debug: CFLAGS += -g
 debug: clean all
+
+# Convenience target
+gcc:
+	$(MAKE) CC=gcc
+
+.PHONY: all run clean debug gcc
