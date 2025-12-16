@@ -169,4 +169,14 @@ int bag_rand(int a, int b) {
     return a + rand() % (b - a + 1);
 }
 
+bool file_exists(const char *filename) {
+    FILE *fp = fopen(filename, "r");
+    bool is_exist = false;
+    if (fp != NULL)
+    {
+        is_exist = true;
+        fclose(fp); // close the file
+    }
+    return is_exist;
+}
 // Utility functions end

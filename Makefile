@@ -10,12 +10,11 @@ SRC = $(shell find $(SRC_DIR) -type f -name '*.c')
 EXE = $(TARGET)
 
 # === Compiler Selection ===
-# Default compiler
-CC ?= clang
+# Force clang as default (override Make's built-in CC=cc)
+CC := clang
 
-# Windows cross-compile override
 ifeq ($(OS),Windows_NT)
-	CC ?= x86_64-w64-mingw32-gcc
+	CC := x86_64-w64-mingw32-gcc
 	SUBSYSTEM = -mconsole
 else
 	SUBSYSTEM =
@@ -41,8 +40,11 @@ clean:
 debug: CFLAGS += -g
 debug: clean all
 
-# Convenience target
+# === Convenience Targets ===
 gcc:
 	$(MAKE) CC=gcc
 
-.PHONY: all run clean debug gcc
+clang:
+	$(MAKE) CC=clang
+
+.PHONY: all run clean debug gcc clang
