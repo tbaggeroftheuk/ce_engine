@@ -1,15 +1,12 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <time.h>
 
-#include "utils.h"
-#include "tcf.h"
-#include "math_util.h"
 #include "bootstrap.h"
+#include "engine/engine.h"
 
 
 int main(void) {
-    srand(time(NULL)); // dont fricking remove
+    srand(time(NULL)); // dont fricking remove, I need it for bag_rand()
     ce_bootstrap();
     printf("If you see this everything ran correctly!\n");
     return 0;

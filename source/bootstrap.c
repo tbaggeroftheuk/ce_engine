@@ -16,11 +16,12 @@
     #include <sys/stat.h>
 #endif
 
-char path[64];
+char path[256];
 
 void setup_sdl(void) {
     if (SDL_Init(SDL_INIT_VIDEO) != 0) {
     fprintf(stderr, "SDL init failed: %s\n", SDL_GetError());
+    SDL_Quit();
     abort();
     }
 }
@@ -36,16 +37,16 @@ void extract_game_data(void) {
     goober = tcf_extract("data.tcf", path);
     if (goober != TCF_OK) {
         fprintf(stderr, "Fatal Errror: %d\n", goober);
-        abort();
+        exit(1);
     }
 }
 
 void check_boot_vid(void) {
-    char combined_path [64];
+    char combined_path [256];
     snprintf(combined_path, sizeof(combined_path), "%s/media/startup.mp4", path);
 
     if (!file_exists(combined_path)) {
-         show_error_box("Fatal Error!", "Couldn't find startup media :(");
+         show_error_box("Fatal Error!", "Couldn't find startup media");
          exit(1);
     }
 }
