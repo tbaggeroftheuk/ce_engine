@@ -8,27 +8,19 @@ import shutil
 from pathlib import Path
 from typing import List, Tuple
 
-# -----------------------------
-# Constants
-# -----------------------------
 MAGIC = b"TCF"
 VERSION = 1
-ENDIANNESS = b"\x00"   # little endian
+ENDIANNESS = b"\x00"  
 EOF_MARKER = b"EOF"
-BUFFER_SIZE = 64 * 1024  # 64KB buffer for reading/writing
-SHIFT_BITS = 2  # Shift each byte by 2 bits (0-255 range)
+BUFFER_SIZE = 64 * 1024  
+SHIFT_BITS = 2  
 
-# ==============================
-# SHIFT/OBFUSCATION FUNCTIONS
-# ==============================
 def shift_byte(b: int) -> int:
     """Shift/obfuscate a single byte."""
-    # Rotate bits left by SHIFT_BITS
     return ((b << SHIFT_BITS) & 0xFF) | (b >> (8 - SHIFT_BITS))
 
 def unshift_byte(b: int) -> int:
     """Unshift/deobfuscate a single byte."""
-    # Rotate bits right by SHIFT_BITS
     return ((b >> SHIFT_BITS) & 0xFF) | ((b << (8 - SHIFT_BITS)) & 0xFF)
 
 def shift_data(data: bytes) -> bytes:

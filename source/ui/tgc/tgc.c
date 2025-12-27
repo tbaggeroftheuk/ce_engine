@@ -1,19 +1,6 @@
-#include "tgc.h"
+#include "ui/tgc.h"
 #include <stdlib.h>
 #include <string.h>
-
-#pragma pack(push, 1)
-typedef struct {
-    char     magic[3];
-    uint8_t  version;
-    uint16_t width;
-    uint16_t height;
-    uint16_t fps;
-    uint8_t  pixel_format;
-    uint8_t  flags;
-    uint32_t frame_count;
-} TGC_Header;
-#pragma pack(pop)
 
 
 int TGC_Open(TGC_Video* vid, const char* path)

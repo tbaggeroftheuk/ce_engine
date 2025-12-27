@@ -22,7 +22,7 @@ endif
 
 # === Flags ===
 CFLAGS = -Wall -Wextra -std=c11 -I$(INCLUDE_DIR)
-SDL_FLAGS = $(shell sdl2-config --cflags --libs) -lSDL2_mixer
+SDL_FLAGS = $(shell sdl2-config --cflags --libs) -lSDL2_mixer -ltheora -logg
 
 # === Build Rules ===
 all: $(EXE)

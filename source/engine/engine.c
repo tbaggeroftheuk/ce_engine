@@ -1,5 +1,5 @@
 #include <SDL2/SDL.h>
 
-void ce_main(void) {
-    
-}
+#include "ui/info_box.h"
+#include "globals.h"
+#include "engine/engine.h"

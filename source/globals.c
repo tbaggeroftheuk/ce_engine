@@ -1,3 +1,3 @@
-#include "globals.h" 
+#include "globals.h"
 
-const char* tmp_dir = "/tmp";
+g_globals ce_globals;
