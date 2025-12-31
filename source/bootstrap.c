@@ -1,10 +1,15 @@
+// External includes
 #include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <raylib.h>
 
+// Internal includes
 #include "bootstrap.h"
-#include "globals.h"
+#include "globals.h" // used for ce_globals
+
+// Engine includes
+#include "engine/engine.h"
 #include "engine/fio/tcf.h"
 #include "engine/fio/dir_remove.h"
 
@@ -30,6 +35,7 @@ void extract_game_data(void) {
         fprintf(stderr, "Fatal Error: %d\n", goober);
         exit(1);
     }
+    TraceLog(LOG_INFO, "CE: Extracted game data!");
 }
 
 void check_boot_vid(void) {
@@ -43,26 +49,28 @@ void check_boot_vid(void) {
         exit(1);
     }
     strcpy(ce_globals.startup_video, "startup.tgc");
+    TraceLog(LOG_INFO, "CE: Found startup video!");
 }
 
 void setup_window(void) {
     InitWindow(ce_globals.window_width, ce_globals.window_height, ce_globals.game_title);
     SetTargetFPS(30);
+    TraceLog(LOG_INFO, "CE: Window and fps set!");
 }
 
 void ce_exit(void) {
     remove_directory(ce_globals.path);
-    printf("Thanks for playin :D ! \n");
+    exit(0);
 }
 
 void ce_exit_debug(void) {
-    printf("Debug Mode on. No cleanup\n");
-    printf("\nTMP Path: %s\n", ce_globals.path);
+    TraceLog(LOG_INFO, "CE: Game has exited");
+    exit(0);
 }
 
 void ce_bootstrap(void) {
     extract_game_data();
     check_boot_vid();
     setup_window();
-    WaitTime(5);
+    ce_engine_main();
 }
