@@ -1,4 +1,4 @@
-#include "math_util.h"
+#include "utils/math_util.h"
 
 bool is_greater_than(double a, double b) {
     return a > b;

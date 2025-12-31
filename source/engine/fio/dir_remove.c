@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "utils/dir_remove.h"
+#include "engine/fio/dir_remove.h"
 
 #ifdef _WIN32
 #include <windows.h>

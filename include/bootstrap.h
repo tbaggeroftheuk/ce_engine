@@ -6,4 +6,7 @@
 
 void ce_bootstrap(void);
 
+void ce_exit(void);
+void ce_exit_debug(void);
+
 #endif // BOOTSTRAP_H

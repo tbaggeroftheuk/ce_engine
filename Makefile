@@ -10,7 +10,6 @@ SRC = $(shell find $(SRC_DIR) -type f -name '*.c')
 EXE = $(TARGET)
 
 # === Compiler Selection ===
-# Force clang as default (override Make's built-in CC=cc)
 CC := clang
 
 ifeq ($(OS),Windows_NT)
@@ -22,14 +21,16 @@ endif
 
 # === Flags ===
 CFLAGS = -Wall -Wextra -std=c11 -I$(INCLUDE_DIR)
-SDL_FLAGS = $(shell sdl2-config --cflags --libs) -lSDL2_mixer -ltheora -logg
+LDFLAGS = -lraylib $(shell sdl2-config --cflags --libs) -lSDL2_mixer -ltheora -logg
 
 # === Build Rules ===
 all: $(EXE)
 
 $(EXE): $(SRC)
+	@echo "Packing assets..."
 	python3 $(SCRIPT_FOLDER)/tcf.py pack $(ASSET_FOLDER) data.tcf
-	$(CC) $(CFLAGS) -o $@ $^ $(SDL_FLAGS) $(SUBSYSTEM)
+	@echo "Compiling..."
+	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS) $(SUBSYSTEM)
 
 run: $(EXE)
 	./$(EXE)
