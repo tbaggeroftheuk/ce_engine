@@ -32,7 +32,7 @@ void extract_game_data(void) {
 
     goober = tcf_extract("data.tcf", ce_globals.path);
     if (goober != TCF_OK) {
-        fprintf(stderr, "Fatal Error: %d\n", goober);
+        TraceLog(LOG_ERROR, "CE: Failed to extract game data!");
         exit(1);
     }
     TraceLog(LOG_INFO, "CE: Extracted game data!");
@@ -45,7 +45,7 @@ void check_boot_vid(void) {
              "%s/media/startup.tgc", ce_globals.path);
 
     if (!FileExists(combined_path)) {
-        fprintf(stderr, "Fatal Error: Missing startup video\n");
+        TraceLog(LOG_ERROR, "CE: Startup video not found!");
         exit(1);
     }
     strcpy(ce_globals.startup_video, "startup.tgc");
@@ -56,6 +56,30 @@ void setup_window(void) {
     InitWindow(ce_globals.window_width, ce_globals.window_height, ce_globals.game_title);
     SetTargetFPS(30);
     TraceLog(LOG_INFO, "CE: Window and fps set!");
+}
+
+void font_load(void) {
+    snprintf(ce_globals.main_font_path, sizeof(ce_globals.main_font_path), "%s/fonts/%s", ce_globals.path, ce_globals.main_font);
+    ce_globals.main_font_data = LoadFont(ce_globals.main_font_path);
+    TraceLog(LOG_INFO, "CE: Main font loaded from %s", ce_globals.main_font_path);
+}
+
+void load_settings(void) {
+    char setting_save_folder[256];
+    char setting_save_file[256];
+    snprintf(setting_save_folder, sizeof(setting_save_folder), "%s/saves/settings.cfg", ce_globals.base_path);
+
+    if (DirectoryExists(setting_save_folder)) {
+        // Load settings from file
+    } else {
+        mkdir(setting_save_folder, 0755);
+        snprint(setting_save_file, sizeof(setting_save_file), "%s/settings.cfg", setting_save_folder);
+        FILE *settings_cfg = fopen(setting_save_file, "w");
+        if (settings_cfg == NULL) {
+            TraceLog(LOG_ERROR, "CE: Failed to create settings file!");
+            return;         
+        }
+    }
 }
 
 void ce_exit(void) {
@@ -72,5 +96,7 @@ void ce_bootstrap(void) {
     extract_game_data();
     check_boot_vid();
     setup_window();
+    font_load();
     ce_engine_main();
+
 }

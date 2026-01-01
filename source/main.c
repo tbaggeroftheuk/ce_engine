@@ -17,6 +17,7 @@ int main(int argc, char *argv[]) {
     }
 
     if (ce_globals.debug) { // idk if this is easy to break but eh 
+        SetTraceLogLevel(LOG_ALL);
         ce_bootstrap();
         ce_exit_debug();
     } else {
