@@ -10,7 +10,7 @@
 int main(int argc, char *argv[]) {
     SetRandomSeed(time(NULL)); // Don't fricking remove
 
-    if (argc > 1) { // Should I add this to the release build, probs not but ehh
+    if (argc > 1) { // Should I add this to the release build, probs not but ehh I got no anti-piracy
         if (strcmp(argv[1], "debug-mode") == 0) {
             ce_globals.debug = true;
         }

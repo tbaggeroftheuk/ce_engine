@@ -3,6 +3,7 @@
 
 #define PATH_MAX_LEN 256
 #define GAME_TITLE_LEN 205
+#define PUBLISHER_NAME_LEN 100
 
 #include <stdbool.h>
 #include <raylib.h>
@@ -13,7 +14,7 @@ typedef struct {
     // Path stuff
     char startup_video[PATH_MAX_LEN];
     char path[PATH_MAX_LEN];
-    char          base_path[PATH_MAX_LEN];
+    const char          base_path[PATH_MAX_LEN];
 
    // Font stuff
     char main_font[PATH_MAX_LEN];
@@ -21,11 +22,14 @@ typedef struct {
     Font main_font_data;
     
     // Window stuff
-    int window_width;
-    int window_height;
-    char game_title[GAME_TITLE_LEN];
+    const int window_width;
+    const int window_height;
+    bool should_main_menu;
+   
+    const char game_title[GAME_TITLE_LEN];
+    const char publisher[PUBLISHER_NAME_LEN];
 
-   bool debug;
+    bool debug;
 } g_globals;
 
 // Global texures
@@ -36,8 +40,12 @@ typedef struct {
 } g_textures;
 
 typedef struct {
+
+    char settings_dir[PATH_MAX_LEN];
+    char settings_file_path[PATH_MAX_LEN]; 
+
     // Window settings
-    bool window_mode;
+    bool fullscreen;
 
     // Audio settings
     int master_volume;

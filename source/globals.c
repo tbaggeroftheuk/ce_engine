@@ -3,14 +3,22 @@
 
 g_textures ce_global_textures;
 
-g_settings ce_settings;
+g_settings ce_settings = { // Just in case settings load fails or I'm stupid and call smth before loading settings
+    .fullscreen     = false,
+    .master_volume  = 100,
+    .music_volume   = 100,
+    .sfx_volume     = 100
+};
 
 g_globals ce_globals = {
     .window_width  = 800,
     .window_height = 500,
-    .game_title    = "The hunt for the golden keys!",
+    .game_title    = "example",
+    .publisher     = "example_publisher",
+    .main_font     = "Main.ttf",
+    .should_main_menu = true,
+
     .base_path     = "/tmp/ZmFsbGluZ19wb3RhdG9fZ2FtZXM",
     .debug         =  true,
-    .main_font     = "Main.ttf",
 };
 

@@ -10,6 +10,7 @@
 
 // Engine includes
 #include "engine/engine.h"
+#include "engine/modules/settings/settings.h"
 #include "engine/fio/tcf.h"
 #include "engine/fio/dir_remove.h"
 
@@ -28,7 +29,8 @@ void extract_game_data(void) {
     snprintf(ce_globals.path, sizeof(ce_globals.path),
              "%s/%d", ce_globals.base_path, tmp_dir_random);
 
-    mkdir(ce_globals.path, 0755);
+    
+    MakeDirectory(ce_globals.path);
 
     goober = tcf_extract("data.tcf", ce_globals.path);
     if (goober != TCF_OK) {
@@ -54,7 +56,10 @@ void check_boot_vid(void) {
 
 void setup_window(void) {
     InitWindow(ce_globals.window_width, ce_globals.window_height, ce_globals.game_title);
-    SetTargetFPS(30);
+    if (ce_settings.fullscreen) {
+        ToggleFullscreen();
+    }
+    SetTargetFPS(25);
     TraceLog(LOG_INFO, "CE: Window and fps set!");
 }
 
@@ -62,24 +67,6 @@ void font_load(void) {
     snprintf(ce_globals.main_font_path, sizeof(ce_globals.main_font_path), "%s/fonts/%s", ce_globals.path, ce_globals.main_font);
     ce_globals.main_font_data = LoadFont(ce_globals.main_font_path);
     TraceLog(LOG_INFO, "CE: Main font loaded from %s", ce_globals.main_font_path);
-}
-
-void load_settings(void) {
-    char setting_save_folder[256];
-    char setting_save_file[256];
-    snprintf(setting_save_folder, sizeof(setting_save_folder), "%s/saves/settings.cfg", ce_globals.base_path);
-
-    if (DirectoryExists(setting_save_folder)) {
-        // Load settings from file
-    } else {
-        mkdir(setting_save_folder, 0755);
-        snprint(setting_save_file, sizeof(setting_save_file), "%s/settings.cfg", setting_save_folder);
-        FILE *settings_cfg = fopen(setting_save_file, "w");
-        if (settings_cfg == NULL) {
-            TraceLog(LOG_ERROR, "CE: Failed to create settings file!");
-            return;         
-        }
-    }
 }
 
 void ce_exit(void) {
@@ -92,9 +79,11 @@ void ce_exit_debug(void) {
     exit(0);
 }
 
-void ce_bootstrap(void) {
-    extract_game_data();
+void ce_bootstrap(void) {   
+    extract_game_data(); // Must be first! other wise shit breaks
     check_boot_vid();
+    settings_entrance();
+    
     setup_window();
     font_load();
     ce_engine_main();

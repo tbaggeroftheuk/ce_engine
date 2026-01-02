@@ -21,7 +21,7 @@ endif
 
 # === Flags ===
 CFLAGS = -Wall -Wextra -std=c11 -I$(INCLUDE_DIR)
-LDFLAGS = -lraylib $(shell sdl2-config --cflags --libs) -lSDL2_mixer -ltheora -logg
+LDFLAGS = -lraylib -lraygui $(shell sdl2-config --cflags --libs) 
 
 # === Build Rules ===
 all: $(EXE)
