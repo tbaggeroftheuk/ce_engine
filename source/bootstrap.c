@@ -6,7 +6,8 @@
 
 // Internal includes
 #include "bootstrap.h"
-#include "globals.h" // used for ce_globals
+#include "globals.h" 
+// used for ce_globals and ce_settings
 
 // Engine includes
 #include "engine/engine.h"
