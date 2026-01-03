@@ -14,6 +14,7 @@
 #include "engine/modules/settings/settings.h"
 #include "engine/fio/tcf.h"
 #include "engine/fio/dir_remove.h"
+#include "engine/tex_man/texture_manager.h"
 
 #ifdef _WIN32
     #include <direct.h>
@@ -60,7 +61,10 @@ void setup_window(void) {
     if (ce_settings.fullscreen) {
         ToggleFullscreen();
     }
-    SetTargetFPS(25);
+    char window_icon[PATH_MAX_LEN];
+    snprintf(window_icon, sizeof(window_icon), "%s/media/%s", ce_globals.path, ce_globals.window_icon);
+    SetWindowIcon(LoadImage(window_icon));
+    SetTargetFPS(60);
     TraceLog(LOG_INFO, "CE: Window and fps set!");
 }
 
@@ -78,6 +82,14 @@ void ce_exit(void) {
 void ce_exit_debug(void) {
     TraceLog(LOG_INFO, "CE: Game has exited");
     exit(0);
+}
+
+void ce_exit_global(void) {
+    if(ce_globals.debug) {
+        ce_exit_debug();
+    } else {
+        ce_exit();
+    }
 }
 
 void ce_bootstrap(void) {   

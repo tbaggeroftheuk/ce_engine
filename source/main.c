@@ -7,6 +7,8 @@
 #include "globals.h"
 #include "engine/engine.h"
 
+#define PORTABLE_STRNICMP
+
 int main(int argc, char *argv[]) {
     SetRandomSeed(time(NULL)); // Don't fricking remove
 

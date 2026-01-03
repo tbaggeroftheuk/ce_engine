@@ -9,5 +9,8 @@ void show_fps(void) {
     current_fps = GetFPS();
     char fps_text[20];
     snprintf(fps_text, sizeof(fps_text), "FPS: %d", current_fps);
-    DrawTextEx(ce_globals.main_font_data, fps_text, (Vector2){10, 10}, 20, 1, BLACK);
+
+    if (ce_globals.debug) {
+    DrawTextEx(ce_globals.main_font_data, fps_text, (Vector2){10, 10}, 20, 1, WHITE);
+    }
 }

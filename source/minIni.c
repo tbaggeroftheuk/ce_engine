@@ -1,3 +1,10 @@
+#ifdef _WIN32
+  #ifndef _CRT_NONSTDC_NO_DEPRECATE
+    #define _CRT_NONSTDC_NO_DEPRECATE
+  #endif
+  #include <string.h>  // for _strnicmp
+#endif
+
 /*  minIni - Multi-Platform INI file parser, suitable for embedded systems
  *
  *  These routines are in part based on the article "Multiplatform .INI Files"
@@ -19,7 +26,6 @@
  *
  *  Version: $Id: minIni.c 53 2015-01-18 13:35:11Z thiadmer.riemersma@gmail.com $
  */
-
 #if (defined _UNICODE || defined __UNICODE__ || defined UNICODE) && !defined INI_ANSIONLY
 # if !defined UNICODE   /* for Windows */
 #   define UNICODE
@@ -41,6 +47,7 @@
   #include <ctype.h>
   #include <string.h>
   #include <stdlib.h>
+  #include <strings.h>
   #define TCHAR     char
   #define __T(s)    s
   #define _tcscat   strcat
@@ -70,11 +77,24 @@
 #elif defined(_MSC_VER)
   #pragma warning(disable: 4996)	/* for Microsoft Visual C/C++ */
 #endif
+
 #if !defined strnicmp && !defined PORTABLE_STRNICMP
-  #if defined __LINUX__ || defined __FreeBSD__ || defined __OpenBSD__ || defined __APPLE__ || defined __NetBSD__ || defined __DragonFly__ || defined __GNUC__
+
+  // Windows first
+  #if defined(_WIN32) || defined(_WIN64)
+    #define strnicmp  _strnicmp
+
+  // POSIX / Linux / macOS
+  #elif defined(__linux__) || defined(__FreeBSD__) || defined(__APPLE__) || defined(__NetBSD__) || defined(__OpenBSD__) || defined(__DragonFly__)
     #define strnicmp  strncasecmp
+
+  #else
+    #define PORTABLE_STRNICMP
   #endif
+
 #endif
+
+
 #if !defined _totupper
   #define _totupper toupper
 #endif
@@ -962,5 +982,5 @@ int ini_putbool(const TCHAR *Section, const TCHAR *Key, int Value, const TCHAR *
 {
   return ini_puts(Section, Key, Value ? __T("true") : __T("false"), Filename);
 }
-
 #endif /* !INI_READONLY */
+

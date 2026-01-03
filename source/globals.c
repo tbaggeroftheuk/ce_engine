@@ -1,8 +1,6 @@
 #include "globals.h"
 #include <stdbool.h>
 
-g_textures ce_global_textures;
-
 g_settings ce_settings = { // Just in case settings load fails or I'm stupid and call smth before loading settings
     .fullscreen     = false,
     .master_volume  = 100,
@@ -16,6 +14,7 @@ g_globals ce_globals = {
     .game_title    = "example",
     .publisher     = "example_publisher",
     .main_font     = "Main.ttf",
+    .window_icon   = "icon.png",
     .should_main_menu = true,
 
     .base_path     = "/tmp/ZmFsbGluZ19wb3RhdG9fZ2FtZXM",

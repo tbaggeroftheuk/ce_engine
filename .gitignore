@@ -7,6 +7,9 @@ game
 game.exe
 outDebug
 
+
+assets/**
+
 # Build artifacts  
 *.o
 *.obj
@@ -62,5 +65,3 @@ desktop.ini
 *.tmp
 *.temp
 
-# Your helper script
-stuff.sh

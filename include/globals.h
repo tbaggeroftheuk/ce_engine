@@ -1,6 +1,8 @@
 #ifndef GLOBALS_H
 #define GLOBALS_H
 
+#define MAX_TEXTURES 200
+
 #define PATH_MAX_LEN 256
 #define GAME_TITLE_LEN 205
 #define PUBLISHER_NAME_LEN 100
@@ -8,7 +10,7 @@
 #include <stdbool.h>
 #include <raylib.h>
 
-// Global stuff's (i just dumped shit here which I don't know a catagory for)
+// Global stuff's (i just dumped shit here which I don't know a catgory for)
 
 typedef struct {
     // Path stuff
@@ -24,20 +26,13 @@ typedef struct {
     // Window stuff
     const int window_width;
     const int window_height;
-    bool should_main_menu;
-   
+    char window_icon[PATH_MAX_LEN];
+    bool should_main_menu;  
     const char game_title[GAME_TITLE_LEN];
     const char publisher[PUBLISHER_NAME_LEN];
 
     bool debug;
 } g_globals;
-
-// Global texures
-
-typedef struct {
-    Texture2D bg_texture; 
-
-} g_textures;
 
 typedef struct {
 
@@ -58,6 +53,5 @@ extern g_globals ce_globals;
 
 extern g_settings ce_settings;
 
-extern g_textures ce_global_textures;
 
 #endif
