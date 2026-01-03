@@ -39,11 +39,11 @@ void extract_game_data(void) {
         TraceLog(LOG_ERROR, "CE: Failed to extract game data!");
         exit(1);
     }
-    TraceLog(LOG_INFO, "CE: Extracted game data!");
+    TraceLog(LOG_INFO, "CE: Extracted game data to %s", ce_globals.path);
 }
 
 void check_boot_vid(void) {
-    char combined_path[256];
+    char combined_path[PATH_MAX_LEN];
 
     snprintf(combined_path, sizeof(combined_path),
              "%s/media/startup.tgc", ce_globals.path);

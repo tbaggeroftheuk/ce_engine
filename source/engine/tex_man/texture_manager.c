@@ -84,15 +84,23 @@ Texture2D CETextures_Get(const char *name)
 
 
 void CETextures_UnloadAll(void){
+    // Unload all textures except ErrorTex
     for (int i = 0; i < textureCount; i++){
-        if (textures[i].texture.id != ErrorTex.id)
+        if (textures[i].texture.id != 0 && textures[i].texture.id != ErrorTex.id)
             UnloadTexture(textures[i].texture);
     }
-    UnloadTexture(ErrorTex);
+
+    // Only unload ErrorTex once, if it exists
+    if (ErrorTex.id != 0)
+        UnloadTexture(ErrorTex);
+
+    // Reset ErrorTex to empty
     ErrorTex = (Texture2D){ 0 };
 
+    // Reset texture count
     textureCount = 0;
 }
+
 
 
 

@@ -18,6 +18,6 @@ g_globals ce_globals = {
     .should_main_menu = true,
 
     .base_path     = "/tmp/ZmFsbGluZ19wb3RhdG9fZ2FtZXM",
-    .debug         =  true,
+    .debug         =  false,
 };
 

@@ -3,7 +3,7 @@
 
 #define MAX_TEXTURES 200
 
-#define PATH_MAX_LEN 256
+#define PATH_MAX_LEN 400
 #define GAME_TITLE_LEN 205
 #define PUBLISHER_NAME_LEN 100
 
@@ -16,7 +16,7 @@ typedef struct {
     // Path stuff
     char startup_video[PATH_MAX_LEN];
     char path[PATH_MAX_LEN];
-    const char          base_path[PATH_MAX_LEN];
+    char          base_path[PATH_MAX_LEN];
 
    // Font stuff
     char main_font[PATH_MAX_LEN];

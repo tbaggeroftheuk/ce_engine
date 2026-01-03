@@ -12,7 +12,7 @@
 void ce_engine_main(void) {
     CETextures_Init();
     CETextures_Load("main_bg", "media/WPP.png");
-
+	TraceLog(LOG_INFO, "entered the main loop!");
     char gui_style_path[PATH_MAX_LEN];
     snprintf(gui_style_path, sizeof(gui_style_path), "%s/styles/main.rgs", ce_globals.path);
     GuiLoadStyle(gui_style_path);
