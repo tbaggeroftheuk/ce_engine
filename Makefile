@@ -29,7 +29,7 @@ CFLAGS = -Wall -Wextra -std=c11 -I$(INCLUDE_DIR)
 ifeq ($(OS),Windows_NT)
 	LDFLAGS = -lraylib -lSDL2main -lSDL2 -mwindows
 else
-	LDFLAGS = -lraylib -lraygui $(shell sdl2-config --cflags --libs)
+	LDFLAGS = -lraylib -lraygui $(shell sdl2-config --cflags --libs) -lm
 endif
 
 # === Build Rules ===
