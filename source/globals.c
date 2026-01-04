@@ -9,15 +9,14 @@ g_settings ce_settings = { // Just in case settings load fails or I'm stupid and
 };
 
 g_globals ce_globals = {
-    .window_width  = 800,
+    .window_width = 800,
     .window_height = 500,
-    .game_title    = "example",
-    .publisher     = "example_publisher",
-    .main_font     = "Main.ttf",
-    .window_icon   = "icon.png",
+    .game_title = "example",
+    .main_font = "Main.ttf",
+    .window_icon = "icon.png",
     .should_main_menu = true,
-
-    .base_path     = "/tmp/ZmFsbGluZ19wb3RhdG9fZ2FtZXM",
-    .debug         =  false,
+	
+	.version = "ENGINE ALPHA 1",
+    .base_path = "/tmp/ZmFsbGluZ19wb3RhdG9fZ2FtZXM",
+    .debug =  true,
 };
-

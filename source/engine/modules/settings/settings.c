@@ -14,18 +14,21 @@
 void settings_init(void) {
     // GOD I LOVE CROSS PLATFORM CODE!
     // even following fucking apple best practices!
-    #ifdef __unix__
+    #ifdef __linux__
         snprintf(ce_settings.settings_dir, sizeof(ce_settings.settings_dir), 
-        "%s/.config/%s/%s", getenv("HOME"), ce_globals.publisher, ce_globals.game_title);
+        "%s/.config/%s", getenv("HOME"), ce_globals.game_title);
+    
     #elif defined(_WIN32)
         snprintf(ce_settings.settings_dir, sizeof(ce_settings.settings_dir), 
-        "%s/AppData/Roaming/%s/%s", getenv("USERPROFILE"), ce_globals.publisher, ce_globals.game_title);
+        "%s/AppData/Roaming/%s", getenv("USERPROFILE"), ce_globals.game_title);
+    
     #elif __APPLE__
         snprintf(ce_settings.settings_dir, sizeof(ce_settings.settings_dir), 
-        "%s/Library/Application Support/%s/%s", getenv("HOME"), ce_globals.publisher, ce_globals.game_title);
-    else
+        "%s/Library/Application Support/%s", getenv("HOME"), ce_globals.game_title);
+    
+    #else
         snprintf(ce_settings.settings_dir, sizeof(ce_settings.settings_dir), 
-        "%s/saves/%s/%s", ce_globals.base_path, ce_globals.publisher, ce_globals.game_title);
+        "%s/saves/%s", ce_globals.base_path, ce_globals.game_title);
     #endif
 
     snprintf(ce_settings.settings_file_path, sizeof(ce_settings.settings_file_path),

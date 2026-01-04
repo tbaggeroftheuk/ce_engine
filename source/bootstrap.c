@@ -24,18 +24,39 @@
 #endif
 
 
-void extract_game_data(void) {
-    int tmp_dir_random = GetRandomValue(147483647, 2147483647);
-    int goober;
+void extract_game_data(void) { // TODO: FINISH THIS
+    int tcf;
 
-    snprintf(ce_globals.path, sizeof(ce_globals.path),
-             "%s/%d", ce_globals.base_path, tmp_dir_random);
+    #ifdef __linux__
+        const char *cache = getenv("HOME");
+        if (!cache) {
+            TraceLog(LOG_ERROR, "CE: HOME has not been set we cant extract game data :(");
+            exit(1);
+        }
+        snprintf(ce_globals.path, sizeof(ce_globals.path), "%s/.cache/%s", cache, ce_globals.game_title);
 
+    #elif __APPLE__
+        snprintf(ce_globals.path, sizeof(ce_globals.path), "%s/Library/Caches/%s", getenv("HOME"), ce_globals.game_title);
+    #endif
     
-    MakeDirectory(ce_globals.path);
+    if(!DirectoryExists(ce_globals.path)) {
+        MakeDirectory(ce_globals.path);
+    }
+    char version_file_path[PATH_MAX_LEN];
+    snprintf(version_file_path, sizeof(version_file_path), "%s/.version", ce_globals.path);
 
-    goober = tcf_extract("data.tcf", ce_globals.path);
-    if (goober != TCF_OK) {
+    if(!FileExists(version_file_path)) {
+        TraceLog(LOG_INFO, "CE: Missing version file, Creating one");
+		FILE *version_file_data = fopen(version_file_path, "w");
+		if(file == NULL) {
+			TraceLog(LOG_INFO, "Can't write version file"); 
+			exit(1)
+		}
+    }
+
+
+    tcf = tcf_extract("data.tcf", ce_globals.path);
+    if (tcf != TCF_OK) {
         TraceLog(LOG_ERROR, "CE: Failed to extract game data!");
         exit(1);
     }
@@ -93,9 +114,9 @@ void ce_exit_global(void) {
 }
 
 void ce_bootstrap(void) {   
+    settings_entrance();
     extract_game_data(); // Must be first! other wise shit breaks
     check_boot_vid();
-    settings_entrance();
     
     setup_window();
     font_load();

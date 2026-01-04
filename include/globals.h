@@ -5,7 +5,7 @@
 
 #define PATH_MAX_LEN 400
 #define GAME_TITLE_LEN 205
-#define PUBLISHER_NAME_LEN 100
+#define GAME_VER_LEN 50
 
 #include <stdbool.h>
 #include <raylib.h>
@@ -29,7 +29,7 @@ typedef struct {
     char window_icon[PATH_MAX_LEN];
     bool should_main_menu;  
     const char game_title[GAME_TITLE_LEN];
-    const char publisher[PUBLISHER_NAME_LEN];
+	const char version[GAME_VER_LEN];
 
     bool debug;
 } g_globals;

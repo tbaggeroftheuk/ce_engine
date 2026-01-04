@@ -20,7 +20,7 @@
 #include "globals.h"
 #include "engine/engine.h"
 
-#ifdef _WIN32 // Yes I hack just to get this to run on windows!
+#ifdef _WIN32 // Yes it's a hack to get it run on windows
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd){
     (void)hInstance;
     (void)hPrevInstance;
@@ -30,8 +30,8 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (!tmp) tmp = getenv("TEMP");
     if (!tmp) tmp = ".";
 
-    strncpy(ce_globals.base_path, tmp, sizeof(ce_globals.base_path)-1);
-    ce_globals.base_path[sizeof(ce_globals.base_path)-1] = '\0';
+    strncpy(ce_globals.path, tmp, sizeof(ce_globals.path)-1);
+    ce_globals.base_path[sizeof(ce_globals.path)-1] = '\0';
 
     char *argv[] = { "hello.exe", lpCmdLine };
     int argc = (lpCmdLine && lpCmdLine[0]) ? 2 : 1;
