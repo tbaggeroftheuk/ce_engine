@@ -12,7 +12,6 @@
 
 void render_main_menu_ui(void) {
     if (!ce_globals.should_main_menu) return;
-	TraceLog(LOG_INFO, "Entered main ui");
     Texture2D testing = CETextures_Get("main_bg");
     DrawTexture(testing, 0, 0,  WHITE);
 

@@ -5,7 +5,7 @@
 
 #define PATH_MAX_LEN 400
 #define GAME_TITLE_LEN 205
-#define GAME_VER_LEN 50
+#define GAME_VER_LEN 61
 
 #include <stdbool.h>
 #include <raylib.h>

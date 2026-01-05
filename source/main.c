@@ -28,7 +28,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
     const char *tmp = getenv("TMP");
     if (!tmp) tmp = getenv("TEMP");
-    if (!tmp) tmp = ".";
 
     strncpy(ce_globals.path, tmp, sizeof(ce_globals.path)-1);
     ce_globals.base_path[sizeof(ce_globals.path)-1] = '\0';

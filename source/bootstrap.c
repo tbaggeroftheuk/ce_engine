@@ -3,6 +3,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <raylib.h>
+#include <string.h>
 
 // Internal includes
 #include "bootstrap.h"
@@ -24,9 +25,8 @@
 #endif
 
 
-void extract_game_data(void) { // TODO: FINISH THIS
+void extract_game_data(void) {
     int tcf;
-
     #ifdef __linux__
         const char *cache = getenv("HOME");
         if (!cache) {
@@ -42,25 +42,64 @@ void extract_game_data(void) { // TODO: FINISH THIS
     if(!DirectoryExists(ce_globals.path)) {
         MakeDirectory(ce_globals.path);
     }
+
     char version_file_path[PATH_MAX_LEN];
     snprintf(version_file_path, sizeof(version_file_path), "%s/.version", ce_globals.path);
 
     if(!FileExists(version_file_path)) {
-        TraceLog(LOG_INFO, "CE: Missing version file, Creating one");
-		FILE *version_file_data = fopen(version_file_path, "w");
-		if(file == NULL) {
-			TraceLog(LOG_INFO, "Can't write version file"); 
-			exit(1)
-		}
+        TraceLog(LOG_INFO, "CE: Missing version file. Creating one to %s", version_file_path);
+        FILE *version_file_data = fopen(version_file_path, "w");
+        if(version_file_data == NULL) {
+            TraceLog(LOG_INFO, "Can't write version file"); 
+            exit(1);
+        }
+        fprintf(version_file_data, "%s", ce_globals.version);
+        fclose(version_file_data);
     }
 
-
-    tcf = tcf_extract("data.tcf", ce_globals.path);
-    if (tcf != TCF_OK) {
-        TraceLog(LOG_ERROR, "CE: Failed to extract game data!");
+    FILE *version_file_data = fopen(version_file_path, "r");
+    if (!version_file_data) {
+        TraceLog(LOG_ERROR, "CE: Can't open version file for reading");
         exit(1);
     }
-    TraceLog(LOG_INFO, "CE: Extracted game data to %s", ce_globals.path);
+
+    char version[GAME_VER_LEN] = "error_version_could_not_be_gotten";
+    if (fgets(version, sizeof(version), version_file_data)) {
+        version[strcspn(version, "\n")] = '\0';
+    }
+
+    fclose(version_file_data);
+
+    TraceLog(LOG_INFO, "CE: Engine Ver: %s", ce_globals.version);
+    TraceLog(LOG_INFO, "CE: Ver file version: %s", version);
+
+
+    if(!ce_globals.debug) {
+        if(strcmp(version, ce_globals.version) != 0) {
+            tcf = tcf_extract("data.tcf", ce_globals.path);
+            if (tcf != TCF_OK) {
+                TraceLog(LOG_ERROR, "CE: Failed to extract game data!");
+                exit(1);
+            }
+            TraceLog(LOG_INFO, "CE: Extracted game data to %s", ce_globals.path);
+
+
+            version_file_data = fopen(version_file_path, "w");
+            if (!version_file_data) { 
+                TraceLog(LOG_ERROR, "CE: Can't update version file");
+                exit(1);
+            }
+            fprintf(version_file_data, "%s", ce_globals.version);
+            fclose(version_file_data);
+        }
+    } else {
+        tcf = tcf_extract("data.tcf", ce_globals.path);
+        if (tcf != TCF_OK) {
+            TraceLog(LOG_ERROR, "CE: Failed to extract game data!");
+            exit(1);
+        }
+        TraceLog(LOG_INFO, "CE: Extracted game data to %s", ce_globals.path);
+    }
 }
 
 void check_boot_vid(void) {
