@@ -74,34 +74,32 @@ void extract_game_data(void) {
     TraceLog(LOG_INFO, "CE: Ver file version: %s", version);
 
 
-    if(!ce_globals.debug) {
-        if(strcmp(version, ce_globals.version) != 0) {
-            tcf = tcf_extract("data.tcf", ce_globals.path);
-            if (tcf != TCF_OK) {
-                TraceLog(LOG_ERROR, "CE: Failed to extract game data!");
-                exit(1);
-            }
-            TraceLog(LOG_INFO, "CE: Extracted game data to %s", ce_globals.path);
-
-
-            version_file_data = fopen(version_file_path, "w");
-            if (!version_file_data) { 
-                TraceLog(LOG_ERROR, "CE: Can't update version file");
-                exit(1);
-            }
-            fprintf(version_file_data, "%s", ce_globals.version);
-            fclose(version_file_data);
+    if(ce_globals.debug) {
+        int goober;
+        goober = tcf_extract("data.tcf", ce_globals.path);
+        if (goober != TCF_OK) {
+        TraceLog(LOG_INFO, "CE: Failed to extract game data");
+        exit(1);
         }
+        TraceLog(LOG_INFO, "CE: Extracted game data to: %s", ce_globals.path);
     } else {
+         if(strcmp(version, ce_globals.version) != 0) {
         tcf = tcf_extract("data.tcf", ce_globals.path);
         if (tcf != TCF_OK) {
             TraceLog(LOG_ERROR, "CE: Failed to extract game data!");
             exit(1);
         }
         TraceLog(LOG_INFO, "CE: Extracted game data to %s", ce_globals.path);
+        version_file_data = fopen(version_file_path, "w");
+        if (!version_file_data) { 
+            TraceLog(LOG_ERROR, "CE: Can't update version file");
+            exit(1);
+        }
+        fprintf(version_file_data, "%s", ce_globals.version);
+        fclose(version_file_data);
+        }
     }
 }
-
 void check_boot_vid(void) {
     char combined_path[PATH_MAX_LEN];
 

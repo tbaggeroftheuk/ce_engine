@@ -28,7 +28,7 @@ void settings_init(void) {
     
     #else
         snprintf(ce_settings.settings_dir, sizeof(ce_settings.settings_dir), 
-        "%s/saves/%s", ce_globals.base_path, ce_globals.game_title);
+        "saves/");
     #endif
 
     snprintf(ce_settings.settings_file_path, sizeof(ce_settings.settings_file_path),

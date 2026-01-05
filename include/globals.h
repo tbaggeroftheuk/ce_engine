@@ -16,7 +16,6 @@ typedef struct {
     // Path stuff
     char startup_video[PATH_MAX_LEN];
     char path[PATH_MAX_LEN];
-    char          base_path[PATH_MAX_LEN];
 
    // Font stuff
     char main_font[PATH_MAX_LEN];

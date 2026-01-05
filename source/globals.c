@@ -17,6 +17,5 @@ g_globals ce_globals = {
     .should_main_menu = true,
 	
 	.version = "ENGINE ALPHA 1.1",
-    .base_path = "/tmp/ZmFsbGluZ19wb3RhdG9fZ2FtZXM",
     .debug =  true,
 };

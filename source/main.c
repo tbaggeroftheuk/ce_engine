@@ -30,7 +30,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     if (!tmp) tmp = getenv("TEMP");
 
     strncpy(ce_globals.path, tmp, sizeof(ce_globals.path)-1);
-    ce_globals.base_path[sizeof(ce_globals.path)-1] = '\0';
+    ce_globals.path[sizeof(ce_globals.path)-1] = '\0';
 
     char *argv[] = { "hello.exe", lpCmdLine };
     int argc = (lpCmdLine && lpCmdLine[0]) ? 2 : 1;
