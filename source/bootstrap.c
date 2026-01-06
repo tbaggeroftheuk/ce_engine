@@ -100,6 +100,7 @@ void extract_game_data(void) {
         }
     }
 }
+
 void check_boot_vid(void) {
     char combined_path[PATH_MAX_LEN];
 
@@ -150,7 +151,7 @@ void ce_exit_global(void) {
     }
 }
 
-void ce_bootstrap(void) {   
+void ce_initialize(void) {   
     settings_entrance();
     extract_game_data(); // Must be first! other wise shit breaks
     check_boot_vid();

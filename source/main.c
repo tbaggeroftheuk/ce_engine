@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <time.h>
 #include <stdbool.h>
+#include <string.h>
 
 #include <raylib.h>
 
@@ -13,7 +14,6 @@
 #undef NOUSER      
 #endif
 
-#define RAYGUI_IMPLEMENTATION
 #include "raygui.h"
 
 #include "bootstrap.h"
@@ -46,11 +46,11 @@ int main(int argc, char *argv[]) {
     }
     if (ce_globals.debug) {
         SetTraceLogLevel(LOG_ALL);
-        ce_bootstrap();
+        ce_initialize();
         ce_exit_debug();
     } else {
         SetTraceLogLevel(LOG_NONE);
-        ce_bootstrap();
+        ce_initialize();
         ce_exit();
     }
     return 0;

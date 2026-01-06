@@ -9,8 +9,8 @@ g_settings ce_settings = { // Just in case settings load fails or I'm stupid and
 };
 
 g_globals ce_globals = {
-    .window_width = 800,
-    .window_height = 500,
+    .window_width = 1280,
+    .window_height = 720,
     .game_title = "example",
     .main_font = "Main.ttf",
     .window_icon = "icon.png",

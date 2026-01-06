@@ -18,6 +18,7 @@ void ce_engine_main(void) {
     GuiLoadStyle(gui_style_path);
 
     while (!WindowShouldClose()) {
+
         BeginDrawing();
         ClearBackground(GRAY);
 
