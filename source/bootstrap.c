@@ -127,7 +127,8 @@ void setup_window(void) {
     snprintf(window_icon, sizeof(window_icon), "%s/media/%s", ce_globals.path, ce_globals.window_icon);
     SetWindowIcon(LoadImage(window_icon));
     SetTargetFPS(60);
-    TraceLog(LOG_INFO, "CE: Window and fps set!");
+    InitAudioDevice();
+    TraceLog(LOG_INFO, "CE: Window and Audio setup");
 }
 
 void font_load(void) {
@@ -147,7 +148,7 @@ void ce_exit_debug(void) {
     lua_close(ce_globals.Lua);
     CloseWindow();
     TraceLog(LOG_INFO, "CE: Game has exited");
-    exit(EXIT_FAILURE);
+    exit(0);
 }
 
 void ce_exit_global(void) {

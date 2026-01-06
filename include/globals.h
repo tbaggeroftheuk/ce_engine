@@ -5,10 +5,25 @@
 
 #define PATH_MAX_LEN 400
 #define GAME_TITLE_LEN 205
-#define GAME_VER_LEN 61
+#define GAME_VER_LEN 100
+
+#if defined(_WIN32)
+    #define ENGINE_BUILT_ON "Windows"
+#elif defined(__linux__)
+    #define ENGINE_BUILT_ON "Linux"
+#elif defined(__APPLE__) && defined(__MACH__)
+    #define ENGINE_BUILT_ON "macOS"
+#elif defined(__ANDROID__)
+    #define ENGINE_BUILT_ON "Android"
+#else
+    #define ENGINE_BUILT_ON "Unknown OS"
+#endif
+
+
+#define ENGINE_COMPILER __VERSION__
 
 #define ENGINE_VERSION_STRING "ENGINE ALPHA 1.1"
-#define ENGINE_BUILD_INFO ENGINE_VERSION_STRING " | Built: " __DATE__ " " __TIME__
+#define ENGINE_BUILD_INFO ENGINE_VERSION_STRING " | Built: " __DATE__ " " __TIME__ " | Compiler: " ENGINE_COMPILER " | Built on OS: " ENGINE_BUILT_ON
 
 #include <stdbool.h>
 #include <raylib.h>

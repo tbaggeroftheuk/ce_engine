@@ -4,8 +4,6 @@
 
 #include <globals.h>
 
-
-
 void CELua_Initialize(void) {
     ce_globals.Lua = luaL_newstate();
     if (!ce_globals.Lua) {
@@ -27,4 +25,16 @@ void CELua_Initialize(void) {
 
     luaL_requiref(ce_globals.Lua, LUA_UTF8LIBNAME, luaopen_utf8, 1);
     lua_pop(ce_globals.Lua, 1);
+}
+
+bool CELua_RunFile(const char *file_path) {
+    char path_sandboxed[PATH_MAX_LEN];
+    snprintf(path_sandboxed, sizeof(path_sandboxed), "%s", file_path);
+
+    if (luaL_dofile(ce_globals.Lua, path_sandboxed) != LUA_OK)  {
+        TraceLog(LOG_INFO, "CELua  ERROR: %s", lua_tostring(ce_globals.Lua, -1));
+        lua_pop(ce_globals.Lua, 1);
+        return false;
+    }
+    return true;
 }
