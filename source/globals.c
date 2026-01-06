@@ -15,7 +15,6 @@ g_globals ce_globals = {
     .main_font = "Main.ttf",
     .window_icon = "icon.png",
     .should_main_menu = true,
-	
-	.version = "ENGINE ALPHA 1.1",
+	   .version = ENGINE_BUILD_INFO
     .debug =  true,
 };
