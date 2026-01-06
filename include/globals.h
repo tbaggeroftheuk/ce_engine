@@ -7,6 +7,9 @@
 #define GAME_TITLE_LEN 205
 #define GAME_VER_LEN 61
 
+#define ENGINE_VERSION_STRING "ENGINE ALPHA 1.1"
+#define ENGINE_BUILD_INFO ENGINE_VERSION_STRING " | Built: " __DATE__ " " __TIME__
+
 #include <stdbool.h>
 #include <raylib.h>
 
