@@ -1,38 +1,40 @@
-# === Configuration ===
 TARGET = hello
 SRC_DIR = source
 INCLUDE_DIR = include
 ASSET_FOLDER = assets
 SCRIPT_FOLDER = scripts
 
-# Recursively find all .c files
 SRC = $(shell find $(SRC_DIR) -type f -name '*.c')
 EXE = $(TARGET)
 
-# === Compiler Selection ===
 ifeq ($(OS),Windows_NT)
 	CC := x86_64-w64-mingw32-gcc
 	EXE := $(TARGET).exe
-	CFLAGS += -DPLATFORM_WINDOWS
-	LDFLAGS = -lraylib -lSDL2main -lSDL2
+	PLATFORM_FLAGS = -DPLATFORM_WINDOWS
 else
 	CC := clang
-	SUBSYSTEM =
-	LDFLAGS = -lraylib $(shell sdl2-config --cflags --libs)
+	PLATFORM_FLAGS =
 endif
 
+LUA_CFLAGS  = $(shell pkg-config --cflags lua)
+LUA_LDFLAGS = $(shell pkg-config --libs lua)
 
 
-# === Flags ===
-CFLAGS = -Wall -Wextra -std=c11 -I$(INCLUDE_DIR)
-# On Windows, you may need to adjust LDFLAGS if raylib/sdl2 are installed differently
+CFLAGS = -Wall -Wextra -std=c11 \
+	-I$(INCLUDE_DIR) \
+	$(PLATFORM_FLAGS) \
+	$(LUA_CFLAGS)
+
 ifeq ($(OS),Windows_NT)
-	LDFLAGS = -lraylib -lSDL2main -lSDL2 -mwindows
+	LDFLAGS = -lraylib -lSDL2main -lSDL2 -llua -mwindows
 else
-	LDFLAGS = -lraylib -lraygui $(shell sdl2-config --cflags --libs) -lm
+	LDFLAGS = -lraylib -lraygui \
+		$(shell sdl2-config --cflags --libs) \
+		-lm \
+		$(LUA_LDFLAGS)
 endif
 
-# === Build Rules ===
+
 all: $(EXE)
 
 $(EXE): $(SRC)
@@ -41,21 +43,19 @@ $(EXE): $(SRC)
 	@echo "Compiling..."
 	$(CC) $(CFLAGS) -o $@ $^ $(LDFLAGS)
 
-
 run: $(EXE)
 ifeq ($(OS),Windows_NT)
-	@echo "Run the executable manually in Windows"
+	@echo "Run the executable manually on Windows"
 else
 	./$(EXE)
 endif
 
-clean:
-	rm -f $(EXE) data.tcf
-
 debug: CFLAGS += -g
 debug: clean all
 
-# === Convenience Targets ===
+clean:
+	rm -f $(EXE) data.tcf
+
 gcc:
 	$(MAKE) CC=gcc
 

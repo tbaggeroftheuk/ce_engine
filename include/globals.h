@@ -12,6 +12,9 @@
 
 #include <stdbool.h>
 #include <raylib.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 // Global stuff's (i just dumped shit here which I don't know a catgory for)
 
@@ -20,6 +23,7 @@ typedef struct {
     char startup_video[PATH_MAX_LEN];
     char path[PATH_MAX_LEN];
 
+    lua_State *Lua;
    // Font stuff
     char main_font[PATH_MAX_LEN];
     char main_font_path[PATH_MAX_LEN];

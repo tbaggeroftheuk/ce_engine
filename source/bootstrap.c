@@ -4,6 +4,9 @@
 #include <stdlib.h>
 #include <raylib.h>
 #include <string.h>
+#include <lua.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 // Internal includes
 #include "bootstrap.h"
@@ -134,13 +137,17 @@ void font_load(void) {
 }
 
 void ce_exit(void) {
+    lua_close(ce_globals.Lua);
+    CloseWindow();
     remove_directory(ce_globals.path);
     exit(0);
 }
 
 void ce_exit_debug(void) {
+    lua_close(ce_globals.Lua);
+    CloseWindow();
     TraceLog(LOG_INFO, "CE: Game has exited");
-    exit(0);
+    exit(EXIT_FAILURE);
 }
 
 void ce_exit_global(void) {
