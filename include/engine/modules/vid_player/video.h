@@ -4,10 +4,12 @@
 #include "raylib.h"
 #include <vlc/vlc.h>
 
-typedef struct {
+// In video.h, add vlc_buffer to your VideoPlayer struct:
+typedef struct VideoPlayer {
     libvlc_instance_t *vlcInst;
     libvlc_media_player_t *vlcPlayer;
-    unsigned char *pixels;
+    unsigned char *pixels;      // For Raylib display
+    unsigned char *vlc_buffer;  // For VLC writing - ADD THIS
     Texture2D texture;
     int width;
     int height;

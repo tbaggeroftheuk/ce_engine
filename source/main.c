@@ -15,31 +15,13 @@
 #include <windows.h>
 #undef NOUSER      
 #endif
-
+#define RAYGUI_IMPLEMENTATION
+#define RAYGUI_DISABLE_UNUSED
 #include "raygui.h"
 
 #include "bootstrap.h"
 #include "globals.h"
 #include "engine/engine.h"
-
-#ifdef _WIN32 // Yes it's a hack to get it run on windows
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd){
-    (void)hInstance;
-    (void)hPrevInstance;
-    (void)nShowCmd;
-
-    const char *tmp = getenv("TMP");
-    if (!tmp) tmp = getenv("TEMP");
-
-    strncpy(ce_globals.path, tmp, sizeof(ce_globals.path)-1);
-    ce_globals.path[sizeof(ce_globals.path)-1] = '\0';
-
-    char *argv[] = { "hello.exe", lpCmdLine };
-    int argc = (lpCmdLine && lpCmdLine[0]) ? 2 : 1;
-    return main(argc, argv);
-}
-#endif
-
 
 void handle_sigint(int sig) {
     (void)sig; 
@@ -65,3 +47,21 @@ int main(int argc, char *argv[]) {
     }
     return 0;
 }
+
+#ifdef _WIN32 // Yes it's a hack to get it run on windows
+int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nShowCmd){
+    (void)hInstance;
+    (void)hPrevInstance;
+    (void)nShowCmd;
+
+    const char *tmp = getenv("TMP");
+    if (!tmp) tmp = getenv("TEMP");
+
+    strncpy(ce_globals.path, tmp, sizeof(ce_globals.path)-1);
+    ce_globals.path[sizeof(ce_globals.path)-1] = '\0';
+
+    char *argv[] = { "hello.exe", lpCmdLine };
+    int argc = (lpCmdLine && lpCmdLine[0]) ? 2 : 1;
+    return main(argc, argv);
+}
+#endif

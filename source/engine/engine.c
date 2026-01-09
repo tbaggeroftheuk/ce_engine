@@ -10,7 +10,6 @@
 #include "engine/modules/CE_fps.h"
 #include "engine/ui/main_menu/main_menu_ui.h"
 #include "engine/modules/vid_player/video.h"
-#include "engine/ui/startup_vid.h"
 
 void ce_engine_main(void) {
     CETextures_Init();
@@ -22,7 +21,8 @@ void ce_engine_main(void) {
     snprintf(gui_style_path, sizeof(gui_style_path), "%s/styles/main.rgs", ce_globals.path);
     GuiLoadStyle(gui_style_path);
 
-
+    VideoPlayer weegio = VideoPlayer_Init("video.mp4",  ce_globals.window_width, ce_globals.window_height);
+    VideoPlayer_Play(&weegio);
     while (!WindowShouldClose()) {
 
         BeginDrawing();
@@ -31,7 +31,10 @@ void ce_engine_main(void) {
 
         render_main_menu_ui();
 
-        startup_video_show();
+
+        VideoPlayer_Update(&weegio);
+        DrawTexture(weegio.texture, 0, 0, WHITE);
+
         
         show_fps();
 
