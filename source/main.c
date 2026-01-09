@@ -2,6 +2,8 @@
 #include <time.h>
 #include <stdbool.h>
 #include <string.h>
+#include <stdlib.h>
+#include "signal.h"
 
 #include <raylib.h>
 
@@ -39,8 +41,16 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 #endif
 
 
+void handle_sigint(int sig) {
+    (void)sig; 
+    printf("\nCTR C has been hit!\n");
+    ce_exit_global();
+   
+}
+
 int main(int argc, char *argv[]) {
     SetRandomSeed(time(NULL));
+    signal(SIGINT, handle_sigint);
     if (argc > 1 && strcmp(argv[1], "debug-mode") == 0) {
         ce_globals.debug = true;
     }

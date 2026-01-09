@@ -85,6 +85,17 @@ void extract_game_data(void) {
         exit(1);
         }
         TraceLog(LOG_INFO, "CE: Extracted game data to: %s", ce_globals.path);
+        
+        version_file_data = fopen(version_file_path, "w");
+        
+        if (!version_file_data) { 
+            TraceLog(LOG_ERROR, "CE: Can't update version file");
+            exit(1);
+        }
+        fprintf(version_file_data, "%s", ce_globals.version);
+        fclose(version_file_data);       
+
+        
     } else {
          if(strcmp(version, ce_globals.version) != 0) {
         tcf = tcf_extract("data.tcf", ce_globals.path);
@@ -141,13 +152,13 @@ void ce_exit(void) {
     lua_close(ce_globals.Lua);
     CloseWindow();
     remove_directory(ce_globals.path);
-    exit(0);
+ //   exit(0);
 }
 
 void ce_exit_debug(void) {
     lua_close(ce_globals.Lua);
     CloseWindow();
-    TraceLog(LOG_INFO, "CE: Game has exited");
+//    TraceLog(LOG_INFO, "CE: Game has exited");
     exit(0);
 }
 
