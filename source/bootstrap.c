@@ -85,6 +85,17 @@ void extract_game_data(void) {
         exit(1);
         }
         TraceLog(LOG_INFO, "CE: Extracted game data to: %s", ce_globals.path);
+        
+        version_file_data = fopen(version_file_path, "w");
+        
+        if (!version_file_data) { 
+            TraceLog(LOG_ERROR, "CE: Can't update version file");
+            exit(1);
+        }
+        fprintf(version_file_data, "%s", ce_globals.version);
+        fclose(version_file_data);       
+
+        
     } else {
          if(strcmp(version, ce_globals.version) != 0) {
         tcf = tcf_extract("data.tcf", ce_globals.path);
@@ -127,7 +138,8 @@ void setup_window(void) {
     snprintf(window_icon, sizeof(window_icon), "%s/media/%s", ce_globals.path, ce_globals.window_icon);
     SetWindowIcon(LoadImage(window_icon));
     SetTargetFPS(60);
-    TraceLog(LOG_INFO, "CE: Window and fps set!");
+    InitAudioDevice();
+    TraceLog(LOG_INFO, "CE: Window and Audio setup");
 }
 
 void font_load(void) {
@@ -140,14 +152,14 @@ void ce_exit(void) {
     lua_close(ce_globals.Lua);
     CloseWindow();
     remove_directory(ce_globals.path);
-    exit(0);
+ //   exit(0);
 }
 
 void ce_exit_debug(void) {
     lua_close(ce_globals.Lua);
     CloseWindow();
-    TraceLog(LOG_INFO, "CE: Game has exited");
-    exit(EXIT_FAILURE);
+//    TraceLog(LOG_INFO, "CE: Game has exited");
+    exit(0);
 }
 
 void ce_exit_global(void) {

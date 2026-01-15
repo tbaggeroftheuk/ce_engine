@@ -11,4 +11,6 @@ Texture2D CETextures_Get(const char *name);
 
 void CETextures_UnloadAll(void);
 
+void CETextures_LoadDir(const char *currentDir);
+
 #endif
