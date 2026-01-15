@@ -1,0 +1,67 @@
+# Binaries and executables
+main
+*.exe
+*.out
+*.app
+game
+game.exe
+outDebug
+
+
+assets/**
+
+# Build artifacts  
+*.o
+*.obj
+*.a
+*.so
+*.dll
+*.dylib
+build/
+bin/
+dist/
+Debug/
+Release/
+obj/
+
+# C specific
+*.gcno
+*.gcda
+*.su
+
+# Game data files (if generated)
+data.tcf
+*.tcf
+
+# Media files (large assets)
+assets/media/
+*.mp4
+*.mp3
+*.wav
+*.ogg
+
+# Python cache (but keep source .py files)
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Python virtual environment (if any)
+venv/
+env/
+.venv/
+
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Temporary
+*.tmp
+*.temp
+
