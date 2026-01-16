@@ -13,6 +13,7 @@ extern "C" {
 
 namespace CE {
     void extract_game(void) {
+        
         #ifdef __linux__
             const char* home_cstr = std::getenv("HOME");
             if (!home_cstr) {
@@ -94,6 +95,7 @@ namespace CE {
             }
 
             ver_file << CE::engine_ver;
+            return;
         }
 
         if (ver_file_data == CE::engine_ver) {
@@ -115,7 +117,20 @@ namespace CE {
 
             ver_file << CE::engine_ver;
         }
-        ShowError("CE: Extracted game data!");
+        TraceLog(LOG_INFO, "CE: Extracted game data");
         return;
+    }
+
+    void window_init(void) {
+        main_window = raylib::Window( // This mess of CE is to make the game window
+        CE::Global.window_width, // You can modify these settings in globals.hpp 
+        CE::Global.window_height,
+        CE::game_name);
+        SetTargetFPS(60);
+    }
+
+    void bootstrap(void) {
+        extract_game();
+        window_init();
     }
 }

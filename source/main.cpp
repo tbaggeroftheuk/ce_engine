@@ -7,7 +7,9 @@ extern "C" {
 }
 
 int main() {
-    TraceLog(LOG_INFO, "CE: Cattle engine! No BULLSHIT :D");
+    TraceLog(LOG_INFO, "CE: Cattle engine: No BULLSHIT");
+    TraceLog(LOG_INFO, "CE: Engine version: %s", CE::engine_ver.c_str());
+    
     if(CE::debug) {
         SetTraceLogLevel(LOG_ALL);
     } else {
@@ -15,6 +17,7 @@ int main() {
     }
     
     CE::extract_game();
+    CE::window_init();
 
 
     return 0;

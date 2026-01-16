@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include "raylib-cpp.hpp"
 
 namespace CE {
 
@@ -9,6 +10,8 @@ namespace CE {
     inline bool debug = true;
     inline bool should_exit = false;
     inline std::string engine_ver = "Build 0.1";
+
+    inline raylib::Window main_window; // Because of raii I need to have this here
 
     struct Globals {
 
