@@ -1,6 +1,7 @@
 #include <cstdlib>
 #include <format>
 #include <string>
+#include <fstream>
 
 #include "raylib-cpp.hpp"
 
@@ -40,7 +41,8 @@ namespace CE {
         #endif
 
         if(!DirectoryExists(CE::Global.data_path.c_str())) {
-            if(!MakeDirectory(CE::Global.data_path.c_str())) {
+            int result = MakeDirectory(CE::Global.data_path.c_str());
+            if (result != 0 ) {
                 TraceLog(LOG_ERROR, "CE: Can't create cache directory");
                 std::exit(1);
             }
@@ -53,6 +55,30 @@ namespace CE {
 
         if(!FileExists(version_file_path.c_str())) {
             TraceLog(LOG_INFO, "CE: Version file missing or not created");
+            std::string text = CE::engine_ver;
+            SaveFileText(version_file_path.c_str(), text.data());
         }
+
+        std::fstream ver_file(version_file_path, std::ios::in | std::ios::out);     
+        if (!ver_file.is_open()) {
+            TraceLog(LOG_ERROR, "CE: Couldn't open version file for write");
+            std::exit(1);
+        }
+
+        std::string ver_file_data = "if u can see this smth broke";
+        if (!std::getline(ver_file, ver_file_data)) {
+            TraceLog(LOG_ERROR, "CE: Version file is empty");
+        }
+
+        if (CE::debug) {
+            int tcf;
+            tcf = tcf_extract("data.tcf", CE::Global.data_path.c_str());
+            if (tcf != TCF_OK) {
+                TraceLog(LOG_ERROR, "CE: Failed to extract game data");
+                std::exit(1);
+            }
+            ver_file << CE::engine_ver;
+        }
+ 
     }
 }

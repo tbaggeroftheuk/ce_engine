@@ -6,7 +6,7 @@ TARGET        := ce_engine
 SRC_DIR       := source
 INCLUDE_DIR   := include
 
-SRC := $(shell find $(SRC_DIR) -type f -name '*.cpp')
+SRC := $(shell find $(SRC_DIR) -type f \( -name '*.cpp' -o -name '*.c' \) )
 EXE := $(TARGET)
 
 # =========================

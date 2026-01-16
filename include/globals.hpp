@@ -8,6 +8,7 @@ namespace CE {
     inline std::string game_name = "goober game";
     inline bool debug = true;
     inline bool should_exit = false;
+    inline std::string engine_ver = "Build 0.1";
 
     struct Globals {
 
