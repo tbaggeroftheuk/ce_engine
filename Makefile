@@ -53,10 +53,13 @@ CXXFLAGS := -Wall -Wextra -std=c++20 \
 	$(PLATFORM_FLAGS) \
 	-DENGINE_BUILT_ON_OS=$(HOST_OS_ESCAPED)
 
+
+SDL_FLAGS = $(shell sdl2-config --cflags --libs)
+
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib -lopengl32 -lgdi32 -lwinmm -luser32
+	LDFLAGS := -lraylib -lopengl32 -lgdi32 -lwinmm -luser32 $(SDL_FLAGS)
 else
-	LDFLAGS := -lraylib -lm
+	LDFLAGS := -lraylib -lm $(SDL_FLAGS)
 endif
 
 # =========================
