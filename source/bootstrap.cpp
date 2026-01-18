@@ -105,6 +105,9 @@ namespace CE {
         CE::Global.window_height,
         CE::game_name);
         SetTargetFPS(60);
+
+        std::string WindowIconPath = std::format("{}/common/icon.png", CE::Global.data_path);
+        SetWindowIcon(LoadImage(WindowIconPath.c_str()));
     }
 
     void Bootstrap(void) {
