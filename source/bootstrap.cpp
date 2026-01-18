@@ -3,7 +3,7 @@
 #include <string>
 #include <fstream>
 
-#include "raylib-cpp.hpp"
+#include "third_party/raylib_cpp/raylib-cpp.hpp"
 #include "common/errorbox/error_box.hpp"
 
 #include "globals.hpp"
@@ -38,7 +38,7 @@ namespace CE {
             const char* localAppData_cstr = std::getenv("LOCALAPPDATA");
             if (!localAppData_cstr) {
                 TraceLog(LOG_ERROR, "CE: Can't find LOCALAPPDATA environment variable");
-                showError("CE: Can't find LOCALAPPDATA environment variable");
+                ShowError("CE: Can't find LOCALAPPDATA environment variable");
                 std::exit(0);
             }
             std::string Home(localAppData_cstr);
@@ -46,78 +46,56 @@ namespace CE {
         #endif
 
         if (!DirectoryExists(CE::Global.data_path.c_str())) {
-            int result = MakeDirectory(CE::Global.data_path.c_str());
-            if (result != 0) {
-                TraceLog(LOG_ERROR, "CE: Can't create cache directory");
-                ShowError("CE: Can't create cache directory");
+            if (MakeDirectory(CE::Global.data_path.c_str()) != 0) {
+                TraceLog(LOG_FATAL, "CE-Bootstrap: Unable to create data directory");
+                ShowError("CE-Bootstrap: Unable to create data directory");
                 std::exit(1);
             }
+            TraceLog(LOG_INFO, "CE-Bootstrap: Created data directory");
         }
-        TraceLog(LOG_INFO, "CE: Game data is: %s", CE::Global.data_path.c_str());
+        TraceLog(LOG_INFO, "CE-Bootstrap: Data directory is %s", CE::Global.data_path.c_str());
 
-        std::string version_file_path = std::format("{}/.version", CE::Global.data_path);
 
-        if (!FileExists(version_file_path.c_str())) {
-            TraceLog(LOG_INFO, "CE: Version file missing or not created");
-            SaveFileText(version_file_path.c_str(), CE::engine_ver.data());
-        }
+        // Versioned extract
+        bool extract_required = true;
+        std::string ver_file_contents = "this_shouldnt_be_viewable";
 
-        std::string ver_file_data;
+        std::string ver_file_path = std::format("{}/.version", CE::Global.data_path);
 
-        {
-            std::ifstream ver_file(version_file_path);
-            if (!ver_file.is_open()) {
-                TraceLog(LOG_ERROR, "CE: Couldn't open version file for read");
-                ShowError("CE: Couldn't open version file for read");
-                std::exit(1);
+        { // Forcing RAII to close the file
+            std::ifstream ver_file(ver_file_path);
+
+            if(!ver_file.is_open()) {
+                TraceLog(LOG_FATAL, "CE-Bootstrap: Couldn't open version file for read");
+                extract_required = true;
+            }else if(!std::getline(ver_file, ver_file_contents)) {
+                TraceLog(LOG_INFO, "CE-Bootstrap: Version file is empty");
+                extract_required = true;
             }
 
-            if (!std::getline(ver_file, ver_file_data)) {
-                TraceLog(LOG_ERROR, "CE: Version file is empty");
-                ShowError("CE: Version file is empty");
-            }
         }
 
-        if (CE::debug) {
+        if (ver_file_contents != CE::engine_ver) extract_required = true;
+
+        if (CE::debug) extract_required = true;
+
+        TraceLog(LOG_INFO, "CE-Bootstrap: Version from data: %s", ver_file_contents.c_str());
+
+        if (extract_required) {
             int tcf = tcf_extract("data.tcf", CE::Global.data_path.c_str());
             if (tcf != TCF_OK) {
-                TraceLog(LOG_ERROR, "CE: Failed to extract game data");
-                ShowError("CE: Failed to extract game data");
-                std::exit(1);
-            }
-            TraceLog(LOG_INFO, "CE: Extracted game data to: %s", CE::Global.data_path.c_str());
-
-            std::ofstream ver_file(version_file_path);
-            if (!ver_file.is_open()) {
-                TraceLog(LOG_ERROR, "CE: Couldn't open version file for write");
-                ShowError("CE: Couldn't open version file for write");
+                TraceLog(LOG_FATAL, "CE-Bootstrap: Failed to extract game data");
+                ShowError("CE-Bootstrap: Failed to extract game data");
                 std::exit(1);
             }
 
-            ver_file << CE::engine_ver;
-            return;
+            std::ofstream ver_file_out(ver_file_path);
+            if(ver_file_out.is_open()) {
+                ver_file_out << CE::engine_ver;
+            }
         }
 
-        if (ver_file_data == CE::engine_ver) {
-            return;
-        } else {
-            int tcf = tcf_extract("data.tcf", CE::Global.data_path.c_str());
-            if (tcf != TCF_OK) {
-                TraceLog(LOG_ERROR, "CE: Failed to extract game data");
-                ShowError("CE: Failed to extract game data");
-            }
-            TraceLog(LOG_INFO, "CE: Extracted game data to: %s", CE::Global.data_path.c_str());
-
-            std::ofstream ver_file(version_file_path);
-            if (!ver_file.is_open()) {
-                TraceLog(LOG_ERROR, "CE: Couldn't open version file for write");
-                ShowError("CE: Couldn't open version file for write");
-                std::exit(1);
-            }
-
-            ver_file << CE::engine_ver;
-        }
-        TraceLog(LOG_INFO, "CE: Extracted game data");
+        TraceLog(LOG_INFO, "CE-Bootstrap: Game data has been extracted!");
         return;
     }
 
@@ -129,7 +107,7 @@ namespace CE {
         SetTargetFPS(60);
     }
 
-    void bootstrap(void) {
+    void Bootstrap(void) {
         extract_game();
         window_init();
     }

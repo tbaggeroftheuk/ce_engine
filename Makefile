@@ -1,18 +1,16 @@
 # =========================
-# Project configuration
+# Project settings
 # =========================
-
-TARGET        := ce_engine
-SRC_DIR       := source
-INCLUDE_DIR   := include
+TARGET      := ce_engine
+SRC_DIR     := source
+INCLUDE_DIR := include
 
 SRC := $(shell find $(SRC_DIR) -type f \( -name '*.cpp' -o -name '*.c' \) )
 EXE := $(TARGET)
 
 # =========================
-# Host OS detection
+# Detect OS
 # =========================
-
 ifeq ($(OS),Windows_NT)
 	HOST_OS := Windows
 else
@@ -32,9 +30,8 @@ endif
 HOST_OS_ESCAPED := "\"$(HOST_OS)\""
 
 # =========================
-# Compiler selection
+# Compiler & flags
 # =========================
-
 ifeq ($(OS),Windows_NT)
 	CXX := x86_64-w64-mingw32-g++
 	EXE := $(TARGET).exe
@@ -44,34 +41,43 @@ else
 	PLATFORM_FLAGS :=
 endif
 
-# =========================
-# Build flags
-# =========================
-
 CXXFLAGS := -Wall -Wextra -std=c++20 \
 	-I$(INCLUDE_DIR) \
 	$(PLATFORM_FLAGS) \
 	-DENGINE_BUILT_ON_OS=$(HOST_OS_ESCAPED)
 
-
-SDL_FLAGS = $(shell sdl2-config --cflags --libs)
-
+# =========================
+# Linker flags
+# =========================
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib -lopengl32 -lgdi32 -lwinmm -luser32 $(SDL_FLAGS)
+	LDFLAGS := -lraylib -lopengl32 -lgdi32 -lwinmm -luser32 -lole32 -lcomdlg32
 else
-	LDFLAGS := -lraylib -lm $(SDL_FLAGS)
+	LDFLAGS := -lraylib -lm
 endif
 
 # =========================
-# Targets
+# Windows subsystem: hide console for non-debug builds
 # =========================
+ifeq ($(OS),Windows_NT)
+	ifeq ($(filter debug,$(MAKECMDGOALS)),)
+		# Normal build → GUI subsystem (no console)
+		SUBSYSTEM_FLAG := -Wl,-subsystem,windows
+	else
+		# Debug build → console
+		SUBSYSTEM_FLAG :=
+	endif
+endif
 
+# =========================
+# Build rules
+# =========================
 all: $(EXE)
 
 $(EXE): $(SRC)
 	@echo "Compiling on: $(HOST_OS)"
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(SUBSYSTEM_FLAG)
 
+# Run target
 run: $(EXE)
 ifeq ($(OS),Windows_NT)
 	@echo "Run the executable manually on Windows: $(EXE)"
@@ -79,16 +85,20 @@ else
 	./$(EXE)
 endif
 
+# Debug target
 debug: CXXFLAGS += -g
 debug: clean all
 
+# Clean target
 clean:
 	rm -f $(EXE)
 
+# Force use of GCC
 gcc:
 	$(MAKE) CXX=g++
 
+# Force use of Clang
 clang:
 	$(MAKE) CXX=clang++
 
-.PHONY: all run clean debug gcc clang
+.PHONY: all run debug clean gcc clang

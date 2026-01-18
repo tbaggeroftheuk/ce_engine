@@ -1,10 +1,9 @@
 #include <iostream>
-#include "globals.hpp"
 
+#include "third_party/raylib_cpp/raylib-cpp.hpp"
+
+#include "globals.hpp"
 #include "bootstrap.hpp"
-extern "C" {
-    #include <raylib.h>
-}
 
 int main() {
     TraceLog(LOG_INFO, "CE: Cattle engine: No BULLSHIT");
@@ -15,10 +14,8 @@ int main() {
     } else {
         SetTraceLogLevel(LOG_NONE);
     }
-    
-    CE::extract_game();
-    CE::window_init();
 
+    CE::Bootstrap(); // Actually setting up the files, window and other shit
 
     return 0;
 }
