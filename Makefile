@@ -50,7 +50,7 @@ CXXFLAGS := -Wall -Wextra -std=c++20 \
 # Linker flags
 # =========================
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib -lopengl32 -lgdi32 -lwinmm -luser32 -lole32 -lcomdlg32
+	LDFLAGS := -lraylib 
 else
 	LDFLAGS := -lraylib -lm
 endif

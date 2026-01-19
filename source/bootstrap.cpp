@@ -14,49 +14,64 @@ extern "C" {
 namespace CE {
     void extract_game(void) {
         
-        #ifdef __linux__
-            const char* home_cstr = std::getenv("HOME");
-            if (!home_cstr) {
+        #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+
+            const char* cache_cstr = std::getenv("XDG_CACHE_HOME");
+            const char* home_cstr  = std::getenv("HOME");
+
+            if (!cache_cstr && !home_cstr) {
                 TraceLog(LOG_ERROR, "CE: Can't find user home directory");
+                TraceLog(LOG_ERROR, "CE: Please set an environment variable called HOME or XDG_CACHE_HOME");
                 ShowError("CE: Can't find user home directory");
-                std::exit(0);
+                std::exit(1);
             }
-            std::string Home(home_cstr);
-            CE::Global.data_path = std::format("{}/.cache/{}", Home, CE::game_name);
+
+            std::string cache_base = cache_cstr ? cache_cstr : std::format("{}/.cache", home_cstr);
+            CE::Global.data_path = std::format("{}/{}", cache_base, CE::game_name);
 
         #elif __APPLE__
+
             const char* home_cstr = std::getenv("HOME");
             if (!home_cstr) {
-                TraceLog(LOG_ERROR, "CE: Can't find user home directory");
-                showError("CE: Can't find user home directory");
-                std::exit(0);
+                TraceLog(LOG_ERROR, "CE: Can't find user home directory. What did you do to MacOS?!");
+                ShowError("CE: Can't find user home directory. What did you do to MacOS?!");
+                std::exit(1);
             }
             std::string Home(home_cstr);
             CE::Global.data_path = std::format("{}/Library/Caches/{}", Home, CE::game_name);
 
         #elif _WIN32
+
             const char* localAppData_cstr = std::getenv("LOCALAPPDATA");
             if (!localAppData_cstr) {
                 TraceLog(LOG_ERROR, "CE: Can't find LOCALAPPDATA environment variable");
                 ShowError("CE: Can't find LOCALAPPDATA environment variable");
-                std::exit(0);
+                std::exit(1);
             }
             std::string Home(localAppData_cstr);
             CE::Global.data_path = std::format("{}/{}/Cache", Home, CE::game_name);
+
         #endif
 
-        if (!DirectoryExists(CE::Global.data_path.c_str())) {
-            if (MakeDirectory(CE::Global.data_path.c_str()) != 0) {
+        if (!DirectoryExists(CE::Global.data_path.c_str())) { // Check data path exists
+            if (MakeDirectory(CE::Global.data_path.c_str()) != 0) { // Try to make the directory, shows an error if it failed
                 TraceLog(LOG_FATAL, "CE-Bootstrap: Unable to create data directory");
                 ShowError("CE-Bootstrap: Unable to create data directory");
                 std::exit(1);
             }
+
             TraceLog(LOG_INFO, "CE-Bootstrap: Created data directory");
         }
         TraceLog(LOG_INFO, "CE-Bootstrap: Data directory is %s", CE::Global.data_path.c_str());
 
 
-        // Versioned extract
+        if (!FileExists("data.tcf")) {
+            TraceLog(LOG_FATAL, "CE-Bootstrap: Missing game data, please install it!");
+            ShowError("CE-Bootstrap: Missing game data, please install it!");
+            return;
+        }
+
+        // Versioned extract as probs better then extracting every run
         bool extract_required = true;
         std::string ver_file_contents = "this_shouldnt_be_viewable";
 
@@ -66,7 +81,7 @@ namespace CE {
             std::ifstream ver_file(ver_file_path);
 
             if(!ver_file.is_open()) {
-                TraceLog(LOG_FATAL, "CE-Bootstrap: Couldn't open version file for read");
+                TraceLog(LOG_ERROR, "CE-Bootstrap: Couldn't open version file for read");
                 extract_required = true;
             }else if(!std::getline(ver_file, ver_file_contents)) {
                 TraceLog(LOG_INFO, "CE-Bootstrap: Version file is empty");
