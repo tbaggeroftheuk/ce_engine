@@ -7,22 +7,23 @@
 #include <stdint.h>
 
 #define TCF_MAGIC      "TCF"
+#define VERSION        1
+#define ENDIANNESS     0
 #define SHIFT_BITS     2
 #define BUFFER_SIZE    8192
 
-
 #ifdef _WIN32
   #include <direct.h>
+  #include <windows.h>
   #define MKDIR(path) _mkdir(path)
+  #define PATH_SEP '\\'
 #else
   #include <sys/stat.h>
+  #include <dirent.h>
   #define MKDIR(path) mkdir(path, 0755)
+  #define PATH_SEP '/'
 #endif
 
-
-/* ============================================================
-   CRC32
-   ============================================================ */
 
 static uint32_t crc32(const uint8_t *data, size_t len)
 {
@@ -39,30 +40,48 @@ static uint32_t crc32(const uint8_t *data, size_t len)
 }
 
 
-/* ============================================================
-   Byte unshift (lookup table)
-   ============================================================ */
-
+static uint8_t shift_table[256];
 static uint8_t unshift_table[256];
-static int unshift_initialized = 0;
+static int tables_initialized = 0;
 
-static void init_unshift_table(void)
+static void init_tables(void)
 {
-    if (unshift_initialized)
+    if (tables_initialized)
         return;
 
     for (int i = 0; i < 256; i++) {
-        unshift_table[i] =
-            (uint8_t)((i >> SHIFT_BITS) | (i << (8 - SHIFT_BITS)));
+        shift_table[i] = (uint8_t)(((i << SHIFT_BITS) & 0xFF) |
+                                   (i >> (8 - SHIFT_BITS)));
+        unshift_table[i] = (uint8_t)((i >> SHIFT_BITS) | 
+                                     (i << (8 - SHIFT_BITS)));
     }
 
-    unshift_initialized = 1;
+    tables_initialized = 1;
 }
 
 
-/* ============================================================
-   Helpers
-   ============================================================ */
+typedef struct {
+    char    *path;
+    uint32_t offset;
+    uint32_t size;
+} tcf_entry;
+
+static tcf_entry *entries = NULL;
+static size_t entry_count = 0;
+static size_t entry_cap   = 0;
+
+static void add_entry(const char *path, uint32_t size)
+{
+    if (entry_count == entry_cap) {
+        entry_cap = entry_cap ? entry_cap * 2 : 64;
+        entries = realloc(entries, entry_cap * sizeof(tcf_entry));
+    }
+
+    entries[entry_count].path   = strdup(path);
+    entries[entry_count].size   = size;
+    entries[entry_count].offset = 0;
+    entry_count++;
+}
 
 static int ensure_dirs(const char *path)
 {
@@ -106,14 +125,153 @@ static uint32_t read_u32(FILE *f)
     );
 }
 
+#ifdef _WIN32
 
-/* ============================================================
-   Main extractor
-   ============================================================ */
+static void walk_dir(const char *base, const char *rel)
+{
+    char search[MAX_PATH];
+    snprintf(search, sizeof(search), "%s\\%s*", base, rel);
+
+    WIN32_FIND_DATAA fd;
+    HANDLE h = FindFirstFileA(search, &fd);
+    if (h == INVALID_HANDLE_VALUE) return;
+
+    do {
+        if (!strcmp(fd.cFileName, ".") || !strcmp(fd.cFileName, ".."))
+            continue;
+
+        char new_rel[MAX_PATH];
+        snprintf(new_rel, sizeof(new_rel), "%s%s%s",
+                 rel, rel[0] ? "\\" : "", fd.cFileName);
+
+        char full[MAX_PATH];
+        snprintf(full, sizeof(full), "%s\\%s", base, new_rel);
+
+        if (fd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
+            walk_dir(base, new_rel);
+        } else {
+            FILE *f = fopen(full, "rb");
+            fseek(f, 0, SEEK_END);
+            uint32_t size = (uint32_t)ftell(f);
+            fclose(f);
+
+            for (char *p = new_rel; *p; p++)
+                if (*p == '\\') *p = '/';
+
+            add_entry(new_rel, size);
+        }
+    } while (FindNextFileA(h, &fd));
+
+    FindClose(h);
+}
+
+#else 
+
+static void walk_dir(const char *base, const char *rel)
+{
+    char path[1024];
+    snprintf(path, sizeof(path), "%s/%s", base, rel);
+
+    DIR *d = opendir(path[0] ? path : base);
+    if (!d) return;
+
+    struct dirent *e;
+    while ((e = readdir(d))) {
+        if (!strcmp(e->d_name, ".") || !strcmp(e->d_name, ".."))
+            continue;
+
+        char new_rel[1024];
+        snprintf(new_rel, sizeof(new_rel), "%s%s%s",
+                 rel, rel[0] ? "/" : "", e->d_name);
+
+        char full[1024];
+        snprintf(full, sizeof(full), "%s/%s", base, new_rel);
+
+        struct stat st;
+        if (stat(full, &st) != 0)
+            continue;
+
+        if (S_ISDIR(st.st_mode)) {
+            walk_dir(base, new_rel);
+        } else if (S_ISREG(st.st_mode)) {
+            add_entry(new_rel, (uint32_t)st.st_size);
+        }
+    }
+    closedir(d);
+}
+
+#endif
+
+
+int tcf_pack(const char *input_dir, const char *out_path)
+{
+    init_tables();
+    walk_dir(input_dir, "");
+
+    FILE *out = fopen(out_path, "wb");
+    if (!out) return TCF_ERR_IO;
+
+    uint8_t header[18] = {0};
+    fwrite(header, 1, sizeof(header), out);
+
+    uint8_t buffer[BUFFER_SIZE];
+    uint32_t offset = 0;
+
+    for (size_t i = 0; i < entry_count; i++) {
+        entries[i].offset = offset;
+
+        char full[1024];
+        snprintf(full, sizeof(full), "%s/%s", input_dir, entries[i].path);
+
+        FILE *in = fopen(full, "rb");
+        if (!in) return TCF_ERR_IO;
+
+        size_t r;
+        while ((r = fread(buffer, 1, BUFFER_SIZE, in)) > 0) {
+            for (size_t j = 0; j < r; j++)
+                buffer[j] = shift_table[buffer[j]];
+
+            fwrite(buffer, 1, r, out);
+        }
+
+        fclose(in);
+        offset += entries[i].size;
+    }
+
+    uint32_t index_offset = (uint32_t)ftell(out);
+
+    for (size_t i = 0; i < entry_count; i++) {
+        uint16_t len = (uint16_t)strlen(entries[i].path);
+        fwrite(&len, 2, 1, out);
+        fwrite(entries[i].path, 1, len, out);
+        fwrite(&entries[i].offset, 4, 1, out);
+        fwrite(&entries[i].size,   4, 1, out);
+    }
+
+    fwrite("EOF", 1, 3, out);
+
+    memcpy(header + 0, TCF_MAGIC, 3);
+    header[3] = VERSION;
+    header[4] = 0;
+    header[5] = ENDIANNESS;
+
+    memcpy(header + 6,  &index_offset, 4);
+    memcpy(header + 10, &entry_count,  4);
+
+    uint32_t crc = crc32(header, 14);
+    memcpy(header + 14, &crc, 4);
+
+    fseek(out, 0, SEEK_SET);
+    fwrite(header, 1, sizeof(header), out);
+
+    fclose(out);
+    return TCF_OK;
+}
+
 
 int tcf_extract(const char *tcf_path, const char *output_dir)
 {
-    init_unshift_table();
+    init_tables();
 
     FILE *f = fopen(tcf_path, "rb");
     if (!f)
@@ -182,7 +340,6 @@ int tcf_extract(const char *tcf_path, const char *output_dir)
         fread(path, 1, path_len, f);
         path[path_len] = 0;
 
-        /* Prevent directory traversal */
         if (strstr(path, "..")) {
             free(path);
             continue;

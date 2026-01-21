@@ -14,9 +14,10 @@ extern "C" {
 #endif
 
 int tcf_extract(const char *tcf_path, const char *output_dir);
+int tcf_pack(const char *input_dir, const char *out_path);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // TCF_EXTRACT_H 
+#endif 
