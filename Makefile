@@ -1,9 +1,11 @@
 # =========================
 # Project settings
 # =========================
-TARGET      := ce_engine
-SRC_DIR     := source
-INCLUDE_DIR := include
+TARGET        := ce_engine
+ASSET_FOLDER  := assets
+SCRIPT_FOLDER := scripts
+SRC_DIR       := source
+INCLUDE_DIR   := include
 
 SRC := $(shell find $(SRC_DIR) -type f \( -name '*.cpp' -o -name '*.c' \) )
 EXE := $(TARGET)
@@ -50,9 +52,10 @@ CXXFLAGS := -Wall -Wextra -std=c++20 \
 # Linker flags
 # =========================
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib 
+	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32
 else
-	LDFLAGS := -lraylib -lm
+	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi
+
 endif
 
 # =========================
@@ -68,12 +71,19 @@ ifeq ($(OS),Windows_NT)
 	endif
 endif
 
+
+TCF_CMD := python $(SCRIPT_FOLDER)/tcf.py pack $(ASSET_FOLDER) data.tcf
+
+
+
 # =========================
 # Build rules
 # =========================
 all: $(EXE)
 
 $(EXE): $(SRC)
+	@echo "Packing assets"
+	@$(TCF_CMD)
 	@echo "Compiling on: $(HOST_OS)"
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(SUBSYSTEM_FLAG)
 

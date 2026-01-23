@@ -7,11 +7,9 @@ namespace CE {
 
     // General stuff
     inline std::string game_name = "goober game";
-    inline bool debug = true;
-    inline bool should_exit = false;
+    inline bool debug = false;
+    inline int should_exit = 0;
     inline std::string engine_ver = "Build 0.1";
-
-    inline raylib::Window main_window; // Because of raii I need to have this here
 
     struct Globals {
 

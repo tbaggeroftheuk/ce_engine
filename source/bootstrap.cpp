@@ -3,12 +3,14 @@
 #include <string>
 #include <fstream>
 
-#include "third_party/raylib_cpp/raylib-cpp.hpp"
-#include "common/errorbox/error_box.hpp"
 
+#include "common/errorbox/error_box.hpp"
+#include "engine/engine.hpp"
 #include "globals.hpp"
+
 extern "C" {
     #include "common/tcf/tcf.h"
+    #include "raylib.h" 
 }
 
 namespace CE {
@@ -23,7 +25,6 @@ namespace CE {
                 TraceLog(LOG_ERROR, "CE: Can't find user home directory");
                 TraceLog(LOG_ERROR, "CE: Please set an environment variable called HOME or XDG_CACHE_HOME");
                 ShowError("CE: Can't find user home directory");
-                std::exit(1);
             }
 
             std::string cache_base = cache_cstr ? cache_cstr : std::format("{}/.cache", home_cstr);
@@ -35,7 +36,6 @@ namespace CE {
             if (!home_cstr) {
                 TraceLog(LOG_ERROR, "CE: Can't find user home directory. What did you do to MacOS?!");
                 ShowError("CE: Can't find user home directory. What did you do to MacOS?!");
-                std::exit(1);
             }
             std::string Home(home_cstr);
             CE::Global.data_path = std::format("{}/Library/Caches/{}", Home, CE::game_name);
@@ -46,10 +46,9 @@ namespace CE {
             if (!localAppData_cstr) {
                 TraceLog(LOG_ERROR, "CE: Can't find LOCALAPPDATA environment variable");
                 ShowError("CE: Can't find LOCALAPPDATA environment variable");
-                std::exit(1);
             }
             std::string Home(localAppData_cstr);
-            CE::Global.data_path = std::format("{}/{}/Cache", Home, CE::game_name);
+            CE::Global.data_path = std::format("{}\\{}\\Cache", Home, CE::game_name);
 
         #endif
 
@@ -57,7 +56,6 @@ namespace CE {
             if (MakeDirectory(CE::Global.data_path.c_str()) != 0) { // Try to make the directory, shows an error if it failed
                 TraceLog(LOG_FATAL, "CE-Bootstrap: Unable to create data directory");
                 ShowError("CE-Bootstrap: Unable to create data directory");
-                std::exit(1);
             }
 
             TraceLog(LOG_INFO, "CE-Bootstrap: Created data directory");
@@ -68,7 +66,6 @@ namespace CE {
         if (!FileExists("data.tcf")) {
             TraceLog(LOG_FATAL, "CE-Bootstrap: Missing game data, please install it!");
             ShowError("CE-Bootstrap: Missing game data, please install it!");
-            return;
         }
 
         // Versioned extract as probs better then extracting every run
@@ -98,11 +95,27 @@ namespace CE {
 
         if (extract_required) {
             int tcf = tcf_extract("data.tcf", CE::Global.data_path.c_str());
-            if (tcf != TCF_OK) {
-                TraceLog(LOG_FATAL, "CE-Bootstrap: Failed to extract game data");
-                ShowError("CE-Bootstrap: Failed to extract game data");
-                std::exit(1);
-            }
+            
+        if (tcf == TCF_ERR_IO) {
+            TraceLog(LOG_FATAL, "CE-Boostrap: IO error\n");
+            std::exit(1);
+        }
+
+        if (tcf == TCF_ERR_CRC) {
+            TraceLog(LOG_FATAL, "CE-Boostrap: The TCF file has a CRC error\n");
+            std::exit(1);
+        }
+
+        if (tcf == TCF_ERR_MEMORY) {
+            TraceLog(LOG_FATAL, "CE-Boostrap: A memory error occured!\n");
+            std::exit(1);
+        }
+
+        if (tcf == TCF_ERR_FORMAT) {
+            TraceLog(LOG_FATAL, "CE-Boostrap: The TCF file has a format error.\n Is it a TCF file?\n");
+            std::exit(1);
+        }
+
 
             std::ofstream ver_file_out(ver_file_path);
             if(ver_file_out.is_open()) {
@@ -114,19 +127,22 @@ namespace CE {
         return;
     }
 
-    void window_init(void) {
-        main_window = raylib::Window( // This mess of CE is to make the game window
-        CE::Global.window_width, // You can modify these settings in globals.hpp 
-        CE::Global.window_height,
-        CE::game_name);
-        SetTargetFPS(60);
+    void window_init() {
+        InitWindow(CE::Global.window_width, CE::Global.window_height, CE::game_name.c_str()); // changed to standard C raylib
 
-        std::string WindowIconPath = std::format("{}/common/icon.png", CE::Global.data_path);
-        SetWindowIcon(LoadImage(WindowIconPath.c_str()));
+        std::string WindowIconPath = std::format("{}/common/icon.jpg", CE::Global.data_path);
+        Image icon = LoadImage(WindowIconPath.c_str()); // standard C raylib
+        if (icon.data) {
+            SetWindowIcon(icon);
+            UnloadImage(icon); // cleanup
+        }
+
+        SetTargetFPS(60);
     }
 
     void Bootstrap(void) {
         extract_game();
         window_init();
+        CE::Engine::Main();
     }
 }

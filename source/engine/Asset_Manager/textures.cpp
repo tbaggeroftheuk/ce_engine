@@ -1,57 +1,50 @@
 #include <vector>
 #include <string>
 
+#include "engine/assets/assets.hpp"
+
 extern "C" {
     #include <raylib.h> // I can't be bothered to deal with raylib CPP C is fine ;-;
 }
 
 namespace CE::Assets {
 
-    class Texture {
-        private:
-            Texture2D tex{0};
-            std::string name;
-        public:
-            Texture(const std::string& filepath) : name(filepath) { 
-                if(!FileExists(filepath.c_str())) { // If the file path doesn't exist we show an error texture
-                    TraceLog(LOG_ERROR, "CE-Textures: %s does not exist", filepath.c_str());
-                    Image img = GenImageChecked(64, 64, 8, 8, MAGENTA, BLACK);
-                    tex = LoadTextureFromImage(img);
-                    UnloadImage(img);
-                } else {
-                    tex = LoadTexture(filepath.c_str()); // Load normally if it exists
-                }
-            }
+    Texture::Texture(const std::string& filepath) : name(filepath) { 
+        if(!FileExists(filepath.c_str())) { // If the file path doesn't exist we show an error texture
+            TraceLog(LOG_ERROR, "CE-Textures: %s does not exist", filepath.c_str());
+            Image img = GenImageChecked(64, 64, 8, 8, MAGENTA, BLACK);
+            tex = LoadTextureFromImage(img);
+            UnloadImage(img);
+        } else {
+            tex = LoadTexture(filepath.c_str()); // Load normally if it exists
+        }
+    }
 
-            ~Texture() { // Unload texture IF its not zeros
-                if (tex.id != 0) {
-                    UnloadTexture(tex);
-                    TraceLog(LOG_INFO, "CE-Textures: Unloaded %s", name.c_str());
-                }
-            }
+    Texture::~Texture() { // Unload texture IF its not zeros
+        if (tex.id != 0) {
+            UnloadTexture(tex);
+            TraceLog(LOG_INFO, "CE-Textures: Unloaded %s", name.c_str());
+        }
+    }
 
-            Texture(const Texture&) = delete;
-            Texture& operator=(const Texture&) = delete;
+    Texture::Texture(Texture&& other) noexcept : tex(other.tex), name(std::move(other.name)) { // used to safely transfer ownership
+        other.tex = {};
+    }
 
-            // used to safely transfer ownership
-            Texture(Texture&& other) noexcept : tex(other.tex), name(std::move(other.name)) {
-                other.tex = {0};
-            }
+    Texture& Texture::operator=(Texture&& other) noexcept {
+        if (tex.id != 0) UnloadTexture(tex);
+        tex = other.tex;
+        other.tex = {};
+        name = std::move(other.name);
+        return *this;
+    }
 
-            Texture& operator=(Texture&& other) noexcept {
-                if (tex.id != 0) UnloadTexture(tex);
-                tex = other.tex;
-                other.tex = {0};
-                name = std::move(other.name);
-                return *this;
-            }
+    void Texture::draw(int x, int y, Color tint) const {
+        if (tex.id != 0) DrawTexture(tex, x, y, tint);
+    }
 
-            void draw(int x, int y, Color tint = WHITE) const {
-                if (tex.id != 0) DrawTexture(tex, x, y, tint);
-            }
+    Texture::operator Texture2D() const { // Let you access texture 2d directly 
+        return tex;
+    }
 
-            // Let you access texture 2d directly 
-            operator Texture2D() const { return tex; }
-    };
-
-}
+} 

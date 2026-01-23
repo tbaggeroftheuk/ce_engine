@@ -13,5 +13,4 @@ void ShowError(const std::string& msg) {
         "error",
         1
     );
-    std::exit(1);
 }

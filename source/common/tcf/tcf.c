@@ -1,3 +1,7 @@
+/* SPDX-License-Identifier: Zlib
+ * Copyright (c) 2026 Tbaggerofsteam, Tbaggeroftheuk
+ */
+
 #include "common/tcf/tcf.h"
 
 #include <stdio.h>
@@ -74,25 +78,33 @@ static void add_entry(const char *path, uint32_t size)
 {
     if (entry_count == entry_cap) {
         entry_cap = entry_cap ? entry_cap * 2 : 64;
-        entries = realloc(entries, entry_cap * sizeof(tcf_entry));
+        entries = (tcf_entry*)realloc(entries, entry_cap * sizeof(tcf_entry));
+        if (!entries) {
+            fprintf(stderr, "Out of memory\n");
+            exit(EXIT_FAILURE);
+        }
     }
 
-    entries[entry_count].path   = strdup(path);
+    // Allocate memory for the path
+    size_t len = strlen(path) + 1;
+    entries[entry_count].path = (char *)malloc(len);
+    if (!entries[entry_count].path) {
+        fprintf(stderr, "Out of memory\n");
+        exit(EXIT_FAILURE);
+    }
+
+    strcpy(entries[entry_count].path, path);  // copy string
     entries[entry_count].size   = size;
     entries[entry_count].offset = 0;
     entry_count++;
 }
 
-static int ensure_dirs(const char *path)
-{
+
+int ensure_dirs(const char *path) {
     char tmp[1024];
     size_t len = strlen(path);
-
-    if (len >= sizeof(tmp))
-        return -1;
-
+    if (len >= sizeof(tmp)) return -1;
     strcpy(tmp, path);
-
     for (char *p = tmp + 1; *p; p++) {
         if (*p == '/' || *p == '\\') {
             char saved = *p;
@@ -184,7 +196,7 @@ static void walk_dir(const char *base, const char *rel)
         snprintf(new_rel, sizeof(new_rel), "%s%s%s",
                  rel, rel[0] ? "/" : "", e->d_name);
 
-        char full[1024];
+        char full[2048];
         snprintf(full, sizeof(full), "%s/%s", base, new_rel);
 
         struct stat st;
