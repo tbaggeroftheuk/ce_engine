@@ -96,25 +96,33 @@ namespace CE {
         if (extract_required) {
             int tcf = tcf_extract("data.tcf", CE::Global.data_path.c_str());
             
-        if (tcf == TCF_ERR_IO) {
-            TraceLog(LOG_FATAL, "CE-Boostrap: IO error\n");
-            std::exit(1);
+        switch (tcf) {
+            case TCF_ERR_IO:
+                TraceLog(LOG_FATAL, "CE-Bootstrap: IO error\n");
+                std::exit(1);
+                break;
+
+            case TCF_ERR_CRC:
+                TraceLog(LOG_FATAL, "CE-Bootstrap: The TCF file has a CRC error\n");
+                std::exit(1);
+                break;
+
+            case TCF_ERR_MEMORY:
+                TraceLog(LOG_FATAL, "CE-Bootstrap: A memory error occurred!\n");
+                std::exit(1);
+                break;
+
+            case TCF_ERR_FORMAT:
+                TraceLog(LOG_FATAL,
+                        "CE-Bootstrap: The TCF file has a format error.\n"
+                        "Is it a TCF file?\n");
+                std::exit(1);
+                break;
+
+            default:
+                break;
         }
 
-        if (tcf == TCF_ERR_CRC) {
-            TraceLog(LOG_FATAL, "CE-Boostrap: The TCF file has a CRC error\n");
-            std::exit(1);
-        }
-
-        if (tcf == TCF_ERR_MEMORY) {
-            TraceLog(LOG_FATAL, "CE-Boostrap: A memory error occured!\n");
-            std::exit(1);
-        }
-
-        if (tcf == TCF_ERR_FORMAT) {
-            TraceLog(LOG_FATAL, "CE-Boostrap: The TCF file has a format error.\n Is it a TCF file?\n");
-            std::exit(1);
-        }
 
 
             std::ofstream ver_file_out(ver_file_path);

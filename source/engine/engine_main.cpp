@@ -1,5 +1,6 @@
 #include "globals.hpp"
 #include "engine/engine.hpp"
+#include "engine/assets/assets.hpp"
 
 extern "C" {
     #include <raylib.h>
