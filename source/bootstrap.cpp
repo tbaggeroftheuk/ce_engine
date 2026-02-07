@@ -2,10 +2,11 @@
 #include <format>
 #include <string>
 #include <fstream>
-
+#include <filesystem>
 
 #include "common/errorbox/error_box.hpp"
 #include "engine/engine.hpp"
+#include "engine/assets/assets.hpp" // to init the textures
 #include "globals.hpp"
 
 extern "C" {
@@ -14,44 +15,93 @@ extern "C" {
 }
 
 namespace CE {
+    
+void setup_paths() {
+    namespace fs = std::filesystem;
+
+    // --- Cache / data path (UNCHANGED) ---
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+    const char* cache_cstr = std::getenv("XDG_CACHE_HOME");
+    const char* home_cstr  = std::getenv("HOME");
+    if (!cache_cstr && !home_cstr) {
+        TraceLog(LOG_ERROR, "CE: Can't find user home directory");
+        ShowError("CE: Can't find user home directory");
+    }
+    std::string cache_base = cache_cstr
+        ? cache_cstr
+        : std::format("{}/.cache", home_cstr);
+
+    CE::Global.data_path = std::format("{}/{}", cache_base, CE::game_name);
+
+#elif __APPLE__
+    const char* home_cstr = std::getenv("HOME");
+    if (!home_cstr) {
+        TraceLog(LOG_ERROR, "CE: Can't find user home directory");
+        ShowError("CE: Can't find user home directory");
+    }
+    CE::Global.data_path =
+        std::format("{}/Library/Caches/{}", home_cstr, CE::game_name);
+
+#elif _WIN32
+    const char* localAppData_cstr = std::getenv("LOCALAPPDATA");
+    if (!localAppData_cstr) {
+        TraceLog(LOG_ERROR, "CE: Can't find LOCALAPPDATA environment variable");
+        ShowError("CE: Can't find LOCALAPPDATA environment variable");
+    }
+    CE::Global.data_path =
+        std::format("{}\\{}\\Cache", localAppData_cstr, CE::game_name);
+#endif
+
+    // --- Settings & save paths (modern C++) ---
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+    const char* home_cstr = std::getenv("HOME");
+    if (!home_cstr) {
+        TraceLog(LOG_ERROR, "CE: Can't find user home directory");
+        ShowError("CE: Can't find user home directory");
+    }
+
+    CE::Global.settings_path =
+        std::format("{}/.config/{}", home_cstr, CE::game_name);
+
+#elif defined(_WIN32)
+    const char* userprofile_cstr = std::getenv("USERPROFILE");
+    if (!userprofile_cstr) {
+        TraceLog(LOG_ERROR, "CE: Can't find USERPROFILE environment variable");
+        ShowError("CE: Can't find USERPROFILE environment variable");
+    }
+
+    CE::Global.settings_path =
+        std::format("{}\\AppData\\Roaming\\{}", userprofile_cstr, CE::game_name);
+
+#elif defined(__APPLE__)
+    const char* home_cstr = std::getenv("HOME");
+    if (!home_cstr) {
+        TraceLog(LOG_ERROR, "CE: Can't find user home directory");
+        ShowError("CE: Can't find user home directory");
+    }
+
+    CE::Global.settings_path =
+        std::format("{}/Library/Application Support/{}",
+                    home_cstr, CE::game_name);
+
+#else
+    CE::Global.settings_path = "settings";
+#endif
+
+    // Save path lives under settings
+    CE::Global.save_path =
+        (fs::path(CE::Global.settings_path) / "saves").string();
+
+
+    // --- Ensure directories exist ---
+    fs::create_directories(CE::Global.data_path);
+    fs::create_directories(CE::Global.settings_path);
+    fs::create_directories(CE::Global.save_path);
+}
+
+
+
     void extract_game(void) {
-        
-        #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
-
-            const char* cache_cstr = std::getenv("XDG_CACHE_HOME");
-            const char* home_cstr  = std::getenv("HOME");
-
-            if (!cache_cstr && !home_cstr) {
-                TraceLog(LOG_ERROR, "CE: Can't find user home directory");
-                TraceLog(LOG_ERROR, "CE: Please set an environment variable called HOME or XDG_CACHE_HOME");
-                ShowError("CE: Can't find user home directory");
-            }
-
-            std::string cache_base = cache_cstr ? cache_cstr : std::format("{}/.cache", home_cstr);
-            CE::Global.data_path = std::format("{}/{}", cache_base, CE::game_name);
-
-        #elif __APPLE__
-
-            const char* home_cstr = std::getenv("HOME");
-            if (!home_cstr) {
-                TraceLog(LOG_ERROR, "CE: Can't find user home directory. What did you do to MacOS?!");
-                ShowError("CE: Can't find user home directory. What did you do to MacOS?!");
-            }
-            std::string Home(home_cstr);
-            CE::Global.data_path = std::format("{}/Library/Caches/{}", Home, CE::game_name);
-
-        #elif _WIN32
-
-            const char* localAppData_cstr = std::getenv("LOCALAPPDATA");
-            if (!localAppData_cstr) {
-                TraceLog(LOG_ERROR, "CE: Can't find LOCALAPPDATA environment variable");
-                ShowError("CE: Can't find LOCALAPPDATA environment variable");
-            }
-            std::string Home(localAppData_cstr);
-            CE::Global.data_path = std::format("{}\\{}\\Cache", Home, CE::game_name);
-
-        #endif
-
         if (!DirectoryExists(CE::Global.data_path.c_str())) { // Check data path exists
             if (MakeDirectory(CE::Global.data_path.c_str()) != 0) { // Try to make the directory, shows an error if it failed
                 TraceLog(LOG_FATAL, "CE-Bootstrap: Unable to create data directory");
@@ -122,15 +172,11 @@ namespace CE {
             default:
                 break;
         }
-
-
-
             std::ofstream ver_file_out(ver_file_path);
             if(ver_file_out.is_open()) {
                 ver_file_out << CE::engine_ver;
             }
         }
-
         TraceLog(LOG_INFO, "CE-Bootstrap: Game data has been extracted!");
         return;
     }
@@ -149,8 +195,10 @@ namespace CE {
     }
 
     void Bootstrap(void) {
+        setup_paths();
         extract_game();
         window_init();
+        CE::Assets::Textures::Init();
         CE::Engine::Main();
     }
 }

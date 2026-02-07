@@ -2,12 +2,12 @@
 
 #include <string>
 #include "third_party/raylib_cpp/raylib-cpp.hpp"
+#include "common/tdf.hpp"
 
 namespace CE {
-
     // General stuff
     inline std::string game_name = "goober game";
-    inline bool debug = false;
+    inline bool debug = true;
     inline int should_exit = 0;
     inline std::string engine_ver = "Build 0.1";
 
@@ -17,6 +17,8 @@ namespace CE {
         std::string data_path;
         // For setting's path
         std::string settings_path;
+        // Save path
+        std::string save_path;
 
         // Window shit
         const int window_width = 1280;
@@ -24,12 +26,12 @@ namespace CE {
     }; 
     inline Globals Global;
 
-    struct Settings {
+    struct Setting {
         bool fullscreen = false;
 
         int master_vol = 100;
         int music_vol = 100;
         int sfx_vol = 100;
     };
-    inline Settings setting;
+    inline Setting Settings;
 }

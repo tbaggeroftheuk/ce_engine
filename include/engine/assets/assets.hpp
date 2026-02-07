@@ -10,6 +10,7 @@ namespace CE::Assets::Textures {
     
     void Load(const std::string& name, const std::string& filename);
     Texture2D& Get(const std::string& name);
+    void Draw(const std::string& path, const int posX, const int posY, const Color tint = WHITE);
     
     void Unload(const std::string& name);
     void UnloadAll();

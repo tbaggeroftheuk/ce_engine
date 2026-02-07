@@ -1,6 +1,8 @@
 #include <cstdlib>
 #include <string>
-
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmissing-field-initializers"
+#pragma GCC diagnostic pop
 extern "C" {
 #include "third_party/tiny_file_dialogs/tinyfiledialogs.h"
 }

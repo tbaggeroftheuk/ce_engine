@@ -9,13 +9,13 @@ extern "C" {
 namespace CE::Engine {
     int Main() {
         TraceLog(LOG_INFO, "CE-Main: Entering main loop");
-        
         while(!WindowShouldClose()) 
         {   
             BeginDrawing();
             
             ClearBackground(RAYWHITE);
             DrawText("Window created and is displaying stuff", 190, 200, 20, LIGHTGRAY);
+            CE::Assets::Textures::Draw("doesntexist", 0, 0);
             
             EndDrawing();
         }
