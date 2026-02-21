@@ -14,12 +14,15 @@
 void OpenDebugConsole() {
 #if defined(_WIN32)
     AllocConsole();
-
     FILE* fp;
     freopen_s(&fp, "CONOUT$", "w", stdout);
     freopen_s(&fp, "CONIN$", "r", stdin);
     freopen_s(&fp, "CONOUT$", "w", stderr);
 
+    std::cout << "INFO: CE-DEBUG: Debug Mode On\n";
+#else
+    freopen("CE-Debug.log", "w", stdout);
+    freopen("CE-Debug.log", "w", stderr);
     std::cout << "INFO: CE-DEBUG: Debug Mode On\n";
 #endif
 }

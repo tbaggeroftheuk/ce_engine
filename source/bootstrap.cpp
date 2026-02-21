@@ -54,7 +54,6 @@ void setup_paths() {
 
     // --- Settings & save paths (modern C++) ---
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
-    const char* home_cstr = std::getenv("HOME");
     if (!home_cstr) {
         TraceLog(LOG_ERROR, "CE: Can't find user home directory");
         ShowError("CE: Can't find user home directory");
@@ -192,6 +191,12 @@ void setup_paths() {
         }
 
         SetTargetFPS(60);
+
+        if (CE::debug) {
+            SetExitKey(KEY_END);
+        } else {
+            SetExitKey(KEY_NULL);
+        }
     }
 
     void Bootstrap(void) {
