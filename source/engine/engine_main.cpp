@@ -1,6 +1,7 @@
 #include "globals.hpp"
 #include "engine/engine.hpp"
 #include "engine/assets/assets.hpp"
+#include "engine/plugins/plugins.hpp" 
 #include "engine/UI.hpp"
 extern "C" {
     #include <raylib.h>
@@ -18,10 +19,13 @@ namespace CE::Engine {
             ClearBackground(RAYWHITE);
             DrawText("Window created and is displaying stuff", 190, 200, 20, LIGHTGRAY);
             CE::Assets::Textures::Draw("doesntexist", 0, 0);
+            CE::Assets::Textures::Draw("brick.png", 100, 200);
             btn.update();
+            CE::Modules::Update();
             
             EndDrawing();
         }
+        CE::Assets::Textures::Shutdown();
         TraceLog(LOG_INFO, "CE-Main: Exited main loop");
         return CE::should_exit;
     };

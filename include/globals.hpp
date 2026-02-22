@@ -18,6 +18,7 @@ namespace CE {
     inline std::string engine_ver = "Build 0.1";
 
     inline bool showPluginLogs = false;
+    inline bool log2file = false;
     struct Globals {
 
         // For game assets

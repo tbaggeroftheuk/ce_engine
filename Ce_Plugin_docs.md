@@ -36,7 +36,7 @@ extern "C" CE_PluginInfo* CE_GetPluginInfo() {
 Description: Get pointers to engine functions and init basic shite
 ```c++
 Globals* gGlobal = nullptr;
-CE_Funcs gFuncs = nullptr;
+CE_Funcs gFunc = nullptr;
 
 // You can add other stuff but copying the pointers to the globals is to get engine state and use engine functions 
 extern "C" void CE_PluginInit(CE_Funcs* FuncPtr, Globals* GlobalPtr) {

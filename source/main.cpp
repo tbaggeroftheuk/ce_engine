@@ -15,13 +15,20 @@ int main(int argc, char *argv[]) {
         if(std::string(argv[i]) == "--plugin-logs") {
             CE::showPluginLogs = true;
         }
-    }
 
+        if(std::string(argv[i]) == "--log2file") {
+            CE::log2file = true;
+        }
+    }
+    if(CE::log2file) {
+        log2file();
+    }
     if (CE::debug) {
         OpenDebugConsole();
         SetTraceLogLevel(LOG_ALL);
         TraceLog(LOG_INFO, "CE: Debug is currently activated");
     } else {
+        TraceLog(LOG_INFO, "CE Debug is off");
         SetTraceLogLevel(LOG_NONE);
     }
 

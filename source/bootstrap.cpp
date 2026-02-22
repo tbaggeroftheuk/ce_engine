@@ -7,6 +7,7 @@
 #include "common/errorbox/error_box.hpp"
 #include "engine/engine.hpp"
 #include "engine/assets/assets.hpp" // to init the textures
+#include "engine/plugins/plugins.hpp" // to init plugins
 #include "globals.hpp"
 
 extern "C" {
@@ -204,6 +205,8 @@ void setup_paths() {
         extract_game();
         window_init();
         CE::Assets::Textures::Init();
+        CE::Modules::Init();
+        CE::Modules::LoadModules();
         CE::Engine::Main();
     }
 }

@@ -21,6 +21,21 @@ void OpenDebugConsole() {
 
     std::cout << "INFO: CE-DEBUG: Debug Mode On\n";
 #else
+    return;
+#endif
+}
+
+#include <iostream>
+#include <fstream>
+
+void log2file() {
+#if defined(_WIN32)
+    static std::ofstream logfile("CE-Debug.log", std::ios::out | std::ios::trunc);
+
+    if (logfile.is_open()) {
+        logfile << "INFO: CE-DEBUG: Debug Mode On\n";
+    }
+#else
     freopen("CE-Debug.log", "w", stdout);
     freopen("CE-Debug.log", "w", stderr);
     std::cout << "INFO: CE-DEBUG: Debug Mode On\n";
