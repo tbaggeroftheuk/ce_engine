@@ -4,7 +4,7 @@
 #include <fstream>
 #include <filesystem>
 
-#include "common/errorbox/error_box.hpp"
+#include "common/errorbox/error_box.hpp" // This is to show an infobox for a critiqual error
 #include "engine/engine.hpp"
 #include "engine/assets/assets.hpp" // to init the textures
 #include "engine/plugins/plugins.hpp" // to init plugins
@@ -20,7 +20,6 @@ namespace CE {
 void setup_paths() {
     namespace fs = std::filesystem;
 
-    // --- Cache / data path (UNCHANGED) ---
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
     const char* cache_cstr = std::getenv("XDG_CACHE_HOME");
     const char* home_cstr  = std::getenv("HOME");
@@ -149,16 +148,21 @@ void setup_paths() {
         switch (tcf) {
             case TCF_ERR_IO:
                 TraceLog(LOG_FATAL, "CE-Bootstrap: IO error\n");
+                ShowError("Error extracting game data");
                 std::exit(1);
                 break;
 
             case TCF_ERR_CRC:
                 TraceLog(LOG_FATAL, "CE-Bootstrap: The TCF file has a CRC error\n");
-                std::exit(1);
+                if (CE::Flags::bypass_data_file_crc_crash) {
+                    ShowError("Game data may be corrupted, try reinstalling");
+                    std::exit(1);
+                }
                 break;
 
             case TCF_ERR_MEMORY:
                 TraceLog(LOG_FATAL, "CE-Bootstrap: A memory error occurred!\n");
+                ShowError("Internal engine error :(");
                 std::exit(1);
                 break;
 
@@ -166,6 +170,7 @@ void setup_paths() {
                 TraceLog(LOG_FATAL,
                         "CE-Bootstrap: The TCF file has a format error.\n"
                         "Is it a TCF file?\n");
+                ShowError("Game data file may be corrupted, try reinstalling");
                 std::exit(1);
                 break;
 
@@ -183,6 +188,12 @@ void setup_paths() {
 
     void window_init() {
         InitWindow(CE::Global.window_width, CE::Global.window_height, CE::game_name.c_str()); // changed to standard C raylib
+
+        if(!IsWindowReady()) {
+            TraceLog(LOG_FATAL, "CE-Window: Unable to create windows");
+            ShowError("Unable to create game window");
+            std::exit(1);
+        }
 
         std::string WindowIconPath = std::format("{}/common/icon.jpg", CE::Global.data_path);
         Image icon = LoadImage(WindowIconPath.c_str()); // standard C raylib
