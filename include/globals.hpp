@@ -15,7 +15,9 @@ namespace CE {
     inline std::string game_name = "goober game";
     inline bool debug = true;
     inline int should_exit = 0;
+
     inline std::string engine_ver = "Build 0.1";
+    inline int int_engine_ver = 1;
 
     inline bool showPluginLogs = false;
     inline bool log2file = false;

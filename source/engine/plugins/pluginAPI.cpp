@@ -34,49 +34,54 @@ namespace CE::PluginAPI {
         CE::Assets::Textures::Unload(std::string(name));
     }
     void Textures_UnloadAll() {
-        CE::Assets::Textures::Unload;
+        CE::Assets::Textures::UnloadAll();
+
+    }
+
+    void CE_Log(const char* message) {
+        
     }
 
     // Keyboard stuff
-    uint32_t IsKeyPressed(uint32_t key) {
+    uint32_t CE_IsKeyPressed(uint32_t key) {
         if (IsKeyPressed(key)) {
             return 1;
         } else {
             return 0;
         }
     }
-    uint32_t IsKeyPressedRepeat(uint32_t key) {
+    uint32_t CE_IsKeyPressedRepeat(uint32_t key) {
         if (IsKeyPressedRepeat(key)) {
             return 1;
         } else {
             return 0;
         }
     }
-    uint32_t IsKeyDown(uint32_t key) {
+    uint32_t CE_IsKeyDown(uint32_t key) {
         if (IsKeyDown(key)) {
             return 1;
         } else {
             return 0;
         }
     }
-    uint32_t IsKeyReleased(uint32_t key) {
+    uint32_t CE_IsKeyReleased(uint32_t key) {
         if (IsKeyReleased(key)) {
             return 1;
         } else {
             return 0;
         }
     }
-    uint32_t IsKeyUp(uint32_t key) {
+    uint32_t CE_IsKeyUp(uint32_t key) {
         if (IsKeyUp(key)) {
             return 1;
         } else {
             return 0;
         }
     }
-    uint32_t GetKeyPressed(void) {
+    uint32_t CE_GetKeyPressed(void) {
         return GetKeyPressed();
     }
-    uint32_t GetCharPressed(void) {
+    uint32_t CE_GetCharPressed(void) {
         return GetCharPressed();
     }
 }
