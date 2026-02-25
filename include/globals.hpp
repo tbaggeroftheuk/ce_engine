@@ -19,8 +19,6 @@ namespace CE {
     inline std::string engine_ver = "Build 0.1";
     inline int int_engine_ver = 1;
 
-    inline bool showPluginLogs = false;
-    inline bool log2file = false;
     struct Globals {
 
         // For game assets
@@ -44,4 +42,10 @@ namespace CE {
         int sfx_vol = 100;
     };
     inline Setting Settings;
+}
+
+namespace CE::Flags {
+    inline bool show_plugin_logs = true;
+
+    inline bool bypass_data_file_crc_crash = false;
 }
