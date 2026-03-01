@@ -39,8 +39,8 @@ namespace CE::PluginAPI {
         CE::Assets::Textures::Unload;
     }
 
-    void Log(const uint32_t log_level, const char* message) {
-        if (CE::Flags::show_plugin_logs) {
+    void Log(const uint32_t log_level, const char* message) { // This is to let plugins log
+        if (CE::Flags::show_plugin_logs) { // To avoid clutter 
             switch (log_level) {
                 case 1:
                     std::cout << "INFO:" << message;
@@ -53,6 +53,11 @@ namespace CE::PluginAPI {
                     break;
                 case 4:
                     std::cout << "ERROR: " << message;
+                    break;
+                case 5:
+                    std::cout << "FATAL: " << message;
+                    break;
+                default:
                     break;
             }
         }
