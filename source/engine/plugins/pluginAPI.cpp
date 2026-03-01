@@ -36,7 +36,12 @@ namespace CE::PluginAPI {
         CE::Assets::Textures::Unload(std::string(name));
     }
     void Textures_UnloadAll() {
-        CE::Assets::Textures::Unload;
+        CE::Assets::Textures::UnloadAll();
+
+    }
+
+    void CE_Log(const char* message) {
+        
     }
 
     void Log(const uint32_t log_level, const char* message) { // This is to let plugins log

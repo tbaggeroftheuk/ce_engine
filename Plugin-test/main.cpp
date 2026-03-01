@@ -1,14 +1,5 @@
 #include "CE_API.hpp"
 
-static CE_PluginInfo info = {
-    sizeof(CE_PluginInfo),
-    1, 0, // plugin version
-    1, 0, // engine version
-    "VewyCoolPlugin",
-    "Does cool stuff",
-    CE_InGame | CE_UI_Main_Menu | CE_UI_InGame | CE_UI_Pause_Menu
-};
-
 CE_EXPORT CE_PluginInfo* CE_GetPluginInfo() {
     static CE_PluginInfo info = {
         sizeof(CE_PluginInfo),

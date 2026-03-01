@@ -20,7 +20,7 @@
 #endif
 
 void LogError(const std::string message) {
-    if (CE::debug) {
+    if (CE::showPluginLogs) {
         std::cout << "ERROR: CE-Modules:" << message << "\n";
         return;
     }
@@ -28,7 +28,7 @@ void LogError(const std::string message) {
 }
 // The top and below functions are needed due to raylib colliding with windows.h
 void LogInfo(const std::string message) {
-    if (CE::debug) {
+    if (CE::showPluginLogs) {
         std::cout << "INFO: CE-Modules:" << message << "\n";
         return;
     }
@@ -65,7 +65,7 @@ namespace CE::Modules {
         fs::path pluginsPath = fs::path(CE::Global.data_path) / "plugins";
 
         if (!fs::exists(pluginsPath)) {
-            std::cout << "CE-Modules: Plugins folder does not exist, creating...\n";
+            LogInfo("CE-Modules: Plugins folder does not exist, creating");
             fs::create_directories(pluginsPath);
         }
 
@@ -75,10 +75,14 @@ namespace CE::Modules {
 
             std::string ext = entry.path().extension().string();
 
-#ifdef _WIN32
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+            if (ext != ".so") continue;
+#elif defined(__APPLE__)
+            if (ext != ".dylib") continue;
+#elif defined(_WIN32)
             if (ext != ".dll") continue;
 #else
-            if (ext != ".so") continue;
+            continue;
 #endif
 
             std::string fullPath = entry.path().string();
@@ -103,7 +107,7 @@ namespace CE::Modules {
 
             CE_PluginInfo* info = GetInfo();
 
-            if (!info || info->CE_Engine_Version_Major != 1) {
+            if (!info || info->CE_Engine_Version_Major != CE::int_engine_ver) {
                 std::cerr << "CE-Modules: Engine version mismatch in plugin: " << fullPath << "\n";
                 CLOSE_LIB(lib);
                 continue;
@@ -124,8 +128,23 @@ namespace CE::Modules {
             std::cout << "CE-Modules: Loaded plugin: " << info->Name << "\n";
         }
 
+        if (!g_Plugins.empty()) {
+            std::cout << "\nINFO: Loaded plugins:\n";
+            for (const auto &p : g_Plugins) {
+                const char *name = (p.info && p.info->Name) ? p.info->Name : "<unknown>";
+                const char *description = (p.info && p.info->Description) ? p.info->Description : "<unknown>";
+                uint32_t ver_major = (p.info) ? p.info->Plugin_Version_Major : 0;
+                uint32_t ver_minor = (p.info) ? p.info->Plugin_Version_Minor : 0;
+                std::cout << "INFO:     > " << name << "\n";
+                std::cout << "INFO:         > Description: " << description << "\n";
+                std::cout << "INFO:         > Version: " << ver_major << "." << ver_minor <<"\n";
+                std::cout << "INFO:         > Status: " << "Loaded\nINFO:\n";
+            }
+        }
+
         if (g_Plugins.empty()) {
             std::cout << "CE-Modules: No plugins found in " << pluginsPath << "\n";
+            return;
         }
     }
 
