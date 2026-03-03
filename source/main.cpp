@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
             CE::Debug = true;
         }
 
-        if(std::string(argv[I]) == "--plugin-logs") { // Let plugins log
+        if(std::string(argv[I]) == "--plugin-logs") { // Show plugin logs
             CE::Flags::show_plugin_logs = true;
         }
 
