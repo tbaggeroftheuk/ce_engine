@@ -21,8 +21,8 @@ Button::Button(int x, int y, int w, int h,
 }
 
 void Button::update() {
-    Vector2 mousePos = GetMousePosition();
-    isHovering = CheckCollisionPointRec(mousePos, rec);
+    Vector2 MousePos = GetMousePosition();
+    isHovering = CheckCollisionPointRec(MousePos, rec);
     isClicked = isHovering && IsMouseButtonDown(MOUSE_LEFT_BUTTON);
 
     if (isClicked) {
@@ -33,9 +33,9 @@ void Button::update() {
         DrawRectangleRec(rec, Inactive);
     }
 
-    int textWidth = MeasureText(Text.c_str(), 20);
-    int textHeight = 20;
-    DrawText(Text.c_str(), PosX + (width - textWidth)/2, PosY + (height - textHeight)/2, 20, TextColour);
+    int TextWidth = MeasureText(Text.c_str(), 20);
+    int TextHeight = 20;
+    DrawText(Text.c_str(), PosX + (width - TextWidth)/2, PosY + (height - TextHeight)/2, 20, TextColour);
 }
 
 bool Button::hovering() {

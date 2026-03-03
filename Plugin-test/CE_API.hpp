@@ -12,6 +12,11 @@ extern "C" {
     #define CE_EXPORT extern "C"
 #endif
 
+#define LOG_INFO ((uint32_t)1)
+#define LOG_DEBUG ((uint32_t)2)
+#define LOG_WARN ((uint32_t)3)
+#define LOG_ERROR ((uint32_t)4)
+
 // Alphanumeric keys
 #define KEY_NULL            ((uint32_t)0)
 #define KEY_APOSTROPHE      ((uint32_t)39)
@@ -138,18 +143,21 @@ struct CE_Funcs {
     uint32_t Version;
     
     // Texture functions
-    void (*Textures_Draw)(const char* path, uint32_t posX, uint32_t posY);
-    void (*Textures_Unload)(const char* name);
-    void (*Textures_UnloadAll)(void);
+    void (*TexturesDraw)(const char* path, uint32_t posX, uint32_t posY);
+    void (*TexturesUnload)(const char* name);
+    void (*TexturesUnloadAll)(void);
     
-    // Keyboard functions
-    uint32_t (*IsKeyPressed)(uint32_t key);
-    uint32_t (*IsKeyPressedRepeat)(uint32_t key);
-    uint32_t (*IsKeyDown)(uint32_t key);
-    uint32_t (*IsKeyReleased)(uint32_t key);
-    uint32_t (*IsKeyUp)(uint32_t key);
-    uint32_t (*GetKeyPressed)(void);
-    uint32_t (*GetCharPressed)(void);
+    // Keyboard functions (CE prefix)
+    uint32_t (*CeIsKeyPressed)(uint32_t key);
+    uint32_t (*CeIsKeyPressedRepeat)(uint32_t key);
+    uint32_t (*CeIsKeyDown)(uint32_t key);
+    uint32_t (*CeIsKeyReleased)(uint32_t key);
+    uint32_t (*CeIsKeyUp)(uint32_t key);
+    uint32_t (*CeGetKeyPressed)(void);
+    uint32_t (*CeGetCharPressed)(void);
+
+    // Logging helper
+    void (*Log)(uint32_t level, const char* message);
 };
 
 Globals* gGlobal = nullptr;

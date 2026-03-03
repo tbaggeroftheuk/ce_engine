@@ -7,7 +7,6 @@ CE_EXPORT CE_PluginInfo* CE_GetPluginInfo() {
         1, 0, // engine version
         "VewyCoolPlugin",
         "Does cool stuff",
-        CE_InGame | CE_UI_Main_Menu | CE_UI_InGame | CE_UI_Pause_Menu
     };
     return &info;
 }
@@ -15,8 +14,20 @@ CE_EXPORT CE_PluginInfo* CE_GetPluginInfo() {
 CE_EXPORT void CE_PluginInit(CE_Funcs* FuncPtr, Globals* GlobalPtr) {
     gGlobal = GlobalPtr;
     gFunc = FuncPtr;
+    gFunc->Log(LOG_INFO, "The plugin has got the globals!");
 }
 
+bool shownLog = false;
+
 CE_EXPORT void CE_PluginUpdate(void) {
-    gFunc->Textures_Draw("missingtextureucantseenothing", 100, 500);
+    gFunc->TexturesDraw("missingtextureucantseenothing", 100, 500);
+    if(!shownLog) {
+        gFunc->Log(LOG_INFO, "The plugin has updated!");
+        shownLog = true;
+    }
+}
+
+CE_EXPORT void CE_PluginShutdown(void) {
+    gFunc = nullptr;
+    gGlobal = nullptr;
 }

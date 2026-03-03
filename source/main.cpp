@@ -9,25 +9,25 @@
 int main(int argc, char *argv[]) {
 
     // Check for flags
-    for (int i = 1; i < argc; i++) {
-        if (std::string(argv[i]) == "--debug") { // Enable global logging
-            CE::debug = true;
+    for (int I = 1; I < argc; I++) {
+        if (std::string(argv[I]) == "--debug") { // Enable global logging
+            CE::Debug = true;
         }
 
-        if(std::string(argv[i]) == "--plugin-logs") { // Let plugins log
+        if(std::string(argv[I]) == "--plugin-logs") { // Let plugins log
             CE::Flags::show_plugin_logs = true;
         }
 
-        if(std::string(argv[i]) == "--bypass-crc") { // Bypass crc check of the data file
+        if(std::string(argv[I]) == "--bypass-crc") { // Bypass crc check of the data file
             CE::Flags::bypass_data_file_crc_crash = true;
         }
 
-        if(std::string(argv[i]) == "--log2file") { // Log to a file instead of terminal
+        if(std::string(argv[I]) == "--log2file") { // Log to a file instead of terminal
             log2file();
         }
     }
 
-    if (CE::debug) {
+    if (CE::Debug) {
         OpenDebugConsole();
         SetTraceLogLevel(LOG_ALL);
         TraceLog(LOG_INFO, "CE: Debug is currently activated");

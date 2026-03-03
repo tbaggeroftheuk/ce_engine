@@ -13,25 +13,27 @@
 extern "C" {
     #include "common/tcf/tcf.h"
     #include "raylib.h" 
+    #include "third_party/minini/minIni.h"
+    #include "third_party/minini/minGlue.h"
 }
 
 namespace CE {
     
-void setup_paths() {
+void SetupPaths() {
     namespace fs = std::filesystem;
 
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
-    const char* cache_cstr = std::getenv("XDG_CACHE_HOME");
-    const char* home_cstr  = std::getenv("HOME");
-    if (!cache_cstr && !home_cstr) {
+    const char* CacheCstr = std::getenv("XDG_CACHE_HOME");
+    const char* HomeCstr  = std::getenv("HOME");
+    if (!CacheCstr && !HomeCstr) {
         TraceLog(LOG_ERROR, "CE: Can't find user home directory");
         ShowError("CE: Can't find user home directory");
     }
-    std::string cache_base = cache_cstr
-        ? cache_cstr
-        : std::format("{}/.cache", home_cstr);
+    std::string CacheBase = CacheCstr
+        ? CacheCstr
+        : std::format("{}/.cache", HomeCstr);
 
-    CE::Global.data_path = std::format("{}/{}", cache_base, CE::game_name);
+    CE::Global.data_path = std::format("{}/{}", CacheBase, CE::game_name);
 
 #elif __APPLE__
     const char* home_cstr = std::getenv("HOME");
@@ -54,13 +56,13 @@ void setup_paths() {
 
     // --- Settings & save paths (modern C++) ---
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
-    if (!home_cstr) {
+    if (!HomeCstr) {
         TraceLog(LOG_ERROR, "CE: Can't find user home directory");
         ShowError("CE: Can't find user home directory");
     }
 
     CE::Global.settings_path =
-        std::format("{}/.config/{}", home_cstr, CE::game_name);
+        std::format("{}/.config/{}", HomeCstr, CE::game_name);
 
 #elif defined(_WIN32)
     const char* userprofile_cstr = std::getenv("USERPROFILE");
@@ -100,7 +102,7 @@ void setup_paths() {
 
 
 
-    void extract_game(void) {
+    void ExtractGame(void) {
         if (!DirectoryExists(CE::Global.data_path.c_str())) { // Check data path exists
             if (MakeDirectory(CE::Global.data_path.c_str()) != 0) { // Try to make the directory, shows an error if it failed
                 TraceLog(LOG_FATAL, "CE-Bootstrap: Unable to create data directory");
@@ -118,34 +120,34 @@ void setup_paths() {
         }
 
         // Versioned extract as probs better then extracting every run
-        bool extract_required = true;
-        std::string ver_file_contents = "this_shouldnt_be_viewable";
+        bool ExtractRequired = true;
+        std::string VerFileContents = "this_shouldnt_be_viewable";
 
-        std::string ver_file_path = std::format("{}/.version", CE::Global.data_path);
+        std::string VerFilePath = std::format("{}/.version", CE::Global.data_path);
 
         { // Forcing RAII to close the file
-            std::ifstream ver_file(ver_file_path);
+            std::ifstream VerFile(VerFilePath);
 
-            if(!ver_file.is_open()) {
+            if(!VerFile.is_open()) {
                 TraceLog(LOG_ERROR, "CE-Bootstrap: Couldn't open version file for read");
-                extract_required = true;
-            }else if(!std::getline(ver_file, ver_file_contents)) {
+                ExtractRequired = true;
+            }else if(!std::getline(VerFile, VerFileContents)) {
                 TraceLog(LOG_INFO, "CE-Bootstrap: Version file is empty");
-                extract_required = true;
+                ExtractRequired = true;
             }
 
         }
 
-        if (ver_file_contents != CE::engine_ver) extract_required = true;
+        if (VerFileContents != CE::engine_ver) ExtractRequired = true;
 
-        if (CE::debug) extract_required = true;
+        if (CE::Debug) ExtractRequired = true;
 
-        TraceLog(LOG_INFO, "CE-Bootstrap: Version from data: %s", ver_file_contents.c_str());
+        TraceLog(LOG_INFO, "CE-Bootstrap: Version from data: %s", VerFileContents.c_str());
 
-        if (extract_required) {
-            int tcf = tcf_extract("data.tcf", CE::Global.data_path.c_str());
+        if (ExtractRequired) {
+            int Tcf = tcf_extract("data.tcf", CE::Global.data_path.c_str());
             
-        switch (tcf) {
+        switch (Tcf) {
             case TCF_ERR_IO:
                 TraceLog(LOG_FATAL, "CE-Bootstrap: IO error\n");
                 ShowError("Error extracting game data");
@@ -177,34 +179,34 @@ void setup_paths() {
             default:
                 break;
         }
-            std::ofstream ver_file_out(ver_file_path);
-            if(ver_file_out.is_open()) {
-                ver_file_out << CE::engine_ver;
+            std::ofstream VerFileOut(VerFilePath);
+            if(VerFileOut.is_open()) {
+                VerFileOut << CE::engine_ver;
             }
         }
         TraceLog(LOG_INFO, "CE-Bootstrap: Game data has been extracted!");
         return;
     }
 
-    void window_init() {
+    void WindowInit() {
         InitWindow(CE::Global.window_width, CE::Global.window_height, CE::game_name.c_str()); // changed to standard C raylib
 
         if(!IsWindowReady()) {
-            TraceLog(LOG_FATAL, "CE-Window: Unable to create windows");
+            TraceLog(LOG_FATAL, "CE-Window: Unable to create window");
             ShowError("Unable to create game window");
             std::exit(1);
         }
 
         std::string WindowIconPath = std::format("{}/common/icon.jpg", CE::Global.data_path);
-        Image icon = LoadImage(WindowIconPath.c_str()); // standard C raylib
-        if (icon.data) {
-            SetWindowIcon(icon);
-            UnloadImage(icon); // cleanup
+        Image Icon = LoadImage(WindowIconPath.c_str()); // standard C raylib
+        if (Icon.data) {
+            SetWindowIcon(Icon);
+            UnloadImage(Icon); // cleanup
         }
 
         SetTargetFPS(60);
 
-        if (CE::debug) {
+        if (CE::Debug) {
             SetExitKey(KEY_END);
         } else {
             SetExitKey(KEY_NULL);
@@ -212,12 +214,12 @@ void setup_paths() {
     }
 
     void Bootstrap(void) {
-        setup_paths();
-        extract_game();
-        window_init();
+        SetupPaths();
+        ExtractGame();
+        WindowInit();
         CE::Assets::Textures::Init();
-        CE::Modules::Init();
-        CE::Modules::LoadModules();
+        CE::Plugins::Init();
+        CE::Plugins::LoadModules();
         CE::Engine::Main();
     }
 }

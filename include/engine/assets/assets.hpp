@@ -9,6 +9,7 @@ namespace CE::Assets::Textures {
     void Init();
     
     void Load(const std::string& name, const std::string& filename);
+    void LoadFolder(const std::string& folderPath);
     Texture2D& Get(const std::string& name);
     void Draw(const std::string& path, const int posX, const int posY, const Color tint = WHITE);
     

@@ -50,7 +50,23 @@ WARNING: GLFW: Window icon image must be in R8G8B8A8 pixel format
 INFO: TIMER: Target time per frame: 16.667 milliseconds
 INFO: TEXTURE: [ID 3] Texture loaded successfully (64x64 | R8G8B8A8 | 1 mipmaps)
 CE-Modules: Loading plugin: /home/tbagger/.cache/goober game/plugins/TestPlugin.so
+PLUGIN_INFO:The plugin has got the globals!
 CE-Modules: Loaded plugin: VewyCoolPlugin
+
+INFO: Loaded plugins:
+INFO:     > VewyCoolPlugin
+INFO:         > Description: Does cool stuff
+INFO:         > Version: 1.0
+INFO:         > Capabilities: In Game, UI Main Menu, UI In Game, UI Pause Menu
+INFO:         > Status: Loaded
+INFO:
 INFO: CE-Main: Entering main loop
 WARNING: CE-Textures: Missing asset '/home/tbagger/.cache/goober game/doesntexist' 
-WARNING: CE-Textures: Missing asset '/home/tbagger/.cache/goober game/missingtextureucantseenothing' 
+INFO: FILEIO: [/home/tbagger/.cache/goober game/brick.png] File loaded successfully
+INFO: IMAGE: Data loaded successfully (64x64 | R8G8B8A8 | 1 mipmaps)
+INFO: TEXTURE: [ID 4] Texture loaded successfully (64x64 | R8G8B8A8 | 1 mipmaps)
+INFO: CE-Textures: Loaded texture from '/home/tbagger/.cache/goober game/brick.png'
+INFO: FILEIO: [/home/tbagger/.cache/goober game/missingtextureucantseenothing] File loaded successfully
+WARNING: IMAGE: Data format not supported
+WARNING: IMAGE: Failed to load image data
+WARNING: CE-Textures: Failed to load asset '/home/tbagger/.cache/goober game/missingtextureucantseenothing'

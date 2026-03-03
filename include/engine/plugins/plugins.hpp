@@ -22,22 +22,27 @@ extern "C" {
     typedef void* lib_handle;
 #endif
 
+#define CE_LOG_INFO ((uint32_t)1)
+#define CE_LOG_DEBUG ((uint32_t)2)
+#define CE_LOG_WARN ((uint32_t)3)
+#define CE_LOG_ERROR ((uint32_t)4)
+
 struct CE_Funcs {
     uint32_t Version;
 
-    // Texture functions
-    void (*Textures_Draw)(const char* path, uint32_t posX, uint32_t posY);
-    void (*Textures_Unload)(const char* name);
-    void (*Textures_UnloadAll)(void);
+    void (*TexturesDraw)(const char* path, uint32_t posX, uint32_t posY);
+    void (*TexturesUnload)(const char* name);
+    void (*TexturesUnloadAll)(void);
 
-    // Keyboard functions
-    uint32_t (*IsKeyPressed)(uint32_t key);
-    uint32_t (*IsKeyPressedRepeat)(uint32_t key);
-    uint32_t (*IsKeyDown)(uint32_t key);
-    uint32_t (*IsKeyReleased)(uint32_t key);
-    uint32_t (*IsKeyUp)(uint32_t key);
-    uint32_t (*GetKeyPressed)(void);
-    uint32_t (*GetCharPressed)(void);
+    uint32_t (*CeIsKeyPressed)(uint32_t key);
+    uint32_t (*CeIsKeyPressedRepeat)(uint32_t key);
+    uint32_t (*CeIsKeyDown)(uint32_t key);
+    uint32_t (*CeIsKeyReleased)(uint32_t key);
+    uint32_t (*CeIsKeyUp)(uint32_t key);
+    uint32_t (*CeGetKeyPressed)(void);
+    uint32_t (*CeGetCharPressed)(void);
+
+    void (*Log)(const uint32_t log_level, const char* format, ...);
 };
 
 typedef struct CE_PluginInfo {
@@ -65,7 +70,7 @@ enum CE_Capabilities : uint32_t {
     CE_InGame        = 1 << 1,
     CE_UI_Main_Menu  = 1 << 2,
     CE_UI_InGame     = 1 << 3,
-    CE_UI_Pause_Menu = 1 << 4
+    CE_UI_Pause_Menu = 1 << 4,
 };
 
 typedef CE_PluginInfo* (*fn_GetPluginInfo)();
@@ -73,10 +78,26 @@ typedef void (*fn_PluginInit)(CE_Funcs*, PluginGlobals*);
 typedef void (*fn_PluginUpdate)();
 typedef void (*fn_PluginShutdown)();
 
-namespace CE::Modules {
+// Lua injecting
+typedef void (*fn_PluginLuaInject)();
+
+// Ingame update
+typedef void (*fn_PluginInGameUpdate)();
+
+// UI stuff
+typedef void (*fn_PluginMainMenuUpdateUI)();
+typedef void (*fn_PluginPauseMenuUpdateUI)();
+typedef void (*fn_PluginInGameUpdateUI)();
+
+namespace CE::Plugins {
     void Init();
     void LoadModules();
     void Update();
+    void UpdateInGame();
+
+    void UpdateMainMenuUI();
+    void UpdateInGameUI();
+    void UpdatePauseMenuUI();
     void Shutdown();
 
     struct LoadedPlugin {
@@ -84,8 +105,16 @@ namespace CE::Modules {
         CE_PluginInfo* info{};
 
         fn_PluginInit Init{};
-        fn_PluginUpdate Update{};
         fn_PluginShutdown Shutdown{};
+        fn_PluginUpdate Update{};
+
+        fn_PluginLuaInject LuaInject{};
+
+        fn_PluginInGameUpdate InGameUpdate{};
+
+        fn_PluginPauseMenuUpdateUI UpdateUI_PauseMenu{};
+        fn_PluginMainMenuUpdateUI UpdateUI_MainMenu{};
+        fn_PluginInGameUpdate UpdateUI_InGameMenu{};
     };
 
     static std::vector<LoadedPlugin> g_Plugins;
@@ -101,16 +130,19 @@ namespace CE::Assets::Textures {
 namespace CE::PluginAPI {
 
     // Texture
-    void Textures_Draw(const char* path, uint32_t posX, uint32_t posY);
-    void Textures_Unload(const char* name);
-    void Textures_UnloadAll();
+    void TexturesDraw(const char* path, uint32_t posX, uint32_t posY);
+    void TexturesUnload(const char* name);
+    void TexturesUnloadAll();
 
-    // Keyboard
-    uint32_t IsKeyPressed(uint32_t key);
-    uint32_t IsKeyPressedRepeat(uint32_t key);
-    uint32_t IsKeyDown(uint32_t key);
-    uint32_t IsKeyReleased(uint32_t key);
-    uint32_t IsKeyUp(uint32_t key);
-    uint32_t GetKeyPressed(void);
-    uint32_t GetCharPressed(void);
+    // Logging (implemented internally)
+    void Log(const uint32_t log_level, const char* format, ...);
+
+    // Keyboard helpers (CE prefix to avoid naming conflicts with raylib)
+    uint32_t CeIsKeyPressed(uint32_t key);
+    uint32_t CeIsKeyPressedRepeat(uint32_t key);
+    uint32_t CeIsKeyDown(uint32_t key);
+    uint32_t CeIsKeyReleased(uint32_t key);
+    uint32_t CeIsKeyUp(uint32_t key);
+    uint32_t CeGetKeyPressed(void);
+    uint32_t CeGetCharPressed(void);
 }

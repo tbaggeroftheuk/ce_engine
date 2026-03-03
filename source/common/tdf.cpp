@@ -23,288 +23,274 @@ enum class TDFType : uint8_t {
 };
 
 struct TDFValue {
-    TDFType type;
-    std::vector<uint8_t> data;
+    TDFType Type;
+    std::vector<uint8_t> Data;
 };
 
 class TDFFile {
 public:
-    std::unordered_map<std::string, TDFValue> entries;
+    std::unordered_map<std::string, TDFValue> Entries;
 
-    // Save file
-    void save(const std::string& path, uint8_t version = 0x10) const {
-        std::ofstream out(path, std::ios::binary);
-        if (!out) throw std::runtime_error("Cannot open file");
+    // --- Save / Load ---
+    void Save(const std::string& path, uint8_t version = 0x10) const {
+        std::ofstream Out(path, std::ios::binary);
+        if (!Out) throw std::runtime_error("Cannot open file");
 
-        out.write("TDF", 3);
-        out.put(version);
+        Out.write("TDF", 3);
+        Out.put(version);
 
-        std::vector<uint8_t> index;
-        std::vector<uint8_t> data;
+        std::vector<uint8_t> Index;
+        std::vector<uint8_t> Data;
 
-        for (auto& [key, val] : entries) {
-            uint32_t offset = (uint32_t)data.size();
+        for (auto& [key, val] : Entries) {
+            uint32_t Offset = static_cast<uint32_t>(Data.size());
 
-            index.push_back((uint8_t)key.size());
-            index.insert(index.end(), key.begin(), key.end());
-            index.push_back((uint8_t)val.type);
+            Index.push_back(static_cast<uint8_t>(key.size()));
+            Index.insert(Index.end(), key.begin(), key.end());
+            Index.push_back(static_cast<uint8_t>(val.Type));
 
-            index.insert(index.end(),
-                         reinterpret_cast<uint8_t*>(&offset),
-                         reinterpret_cast<uint8_t*>(&offset) + 4);
+            Index.insert(Index.end(),
+                         reinterpret_cast<uint8_t*>(&Offset),
+                         reinterpret_cast<uint8_t*>(&Offset) + 4);
 
-            data.insert(data.end(), val.data.begin(), val.data.end());
+            Data.insert(Data.end(), val.Data.begin(), val.Data.end());
         }
-        index.push_back(0x00);
+        Index.push_back(0x00);
 
-        out.write(reinterpret_cast<char*>(index.data()), index.size());
-        out.write(reinterpret_cast<char*>(data.data()), data.size());
+        Out.write(reinterpret_cast<char*>(Index.data()), Index.size());
+        Out.write(reinterpret_cast<char*>(Data.data()), Data.size());
     }
 
-    // Load file
-    void load(const std::string& path) {
-        std::ifstream in(path, std::ios::binary);
-        if (!in) throw std::runtime_error("Cannot open file");
+    void Load(const std::string& path) {
+        std::ifstream In(path, std::ios::binary);
+        if (!In) throw std::runtime_error("Cannot open file");
 
-        char magic[3];
-        in.read(magic, 3);
-        if (std::memcmp(magic, "TDF", 3) != 0)
+        char Magic[3];
+        In.read(Magic, 3);
+        if (std::memcmp(Magic, "TDF", 3) != 0)
             throw std::runtime_error("Invalid TDF");
 
-        uint8_t version;
-        in.read(reinterpret_cast<char*>(&version), 1);
+        uint8_t Version;
+        In.read(reinterpret_cast<char*>(&Version), 1);
 
-        entries.clear();
+        Entries.clear();
 
-        std::vector<std::tuple<std::string, TDFType, uint32_t>> index;
+        std::vector<std::tuple<std::string, TDFType, uint32_t>> Index;
         while (true) {
-            uint8_t keyLen;
-            in.read(reinterpret_cast<char*>(&keyLen), 1);
-            if (keyLen == 0) break;
+            uint8_t KeyLen;
+            In.read(reinterpret_cast<char*>(&KeyLen), 1);
+            if (KeyLen == 0) break;
 
-            std::string key(keyLen, '\0');
-            in.read(key.data(), keyLen);
+            std::string Key(KeyLen, '\0');
+            In.read(Key.data(), KeyLen);
 
-            uint8_t type;
-            in.read(reinterpret_cast<char*>(&type), 1);
+            uint8_t Type;
+            In.read(reinterpret_cast<char*>(&Type), 1);
 
-            uint32_t offset;
-            in.read(reinterpret_cast<char*>(&offset), 4);
+            uint32_t Offset;
+            In.read(reinterpret_cast<char*>(&Offset), 4);
 
-            index.emplace_back(key, (TDFType)type, offset);
+            Index.emplace_back(Key, static_cast<TDFType>(Type), Offset);
         }
 
-        std::streampos dataStart = in.tellg();
+        std::streampos DataStart = In.tellg();
 
-        for (auto& [key, type, offset] : index) {
-            in.seekg(dataStart + std::streamoff(offset));
+        for (auto& [key, type, offset] : Index) {
+            In.seekg(DataStart + std::streamoff(offset));
 
-            TDFValue val;
-            val.type = type;
-            readValue(in, val);
+            TDFValue Val{ type, {} };
+            ReadValue(In, Val);
 
-            entries[key] = val;
+            Entries[key] = Val;
         }
     }
 
     // --- Access / Modify ---
-
-    void set(const std::string& key, const TDFValue& val) {
-        entries[key] = val;
+    void Set(const std::string& key, const TDFValue& val) {
+        Entries[key] = val;
     }
 
-    bool remove(const std::string& key) {
-        return entries.erase(key) > 0;
+    bool Remove(const std::string& key) {
+        return Entries.erase(key) > 0;
     }
 
-    bool has(const std::string& key) const {
-        return entries.find(key) != entries.end();
+    bool Has(const std::string& key) const {
+        return Entries.find(key) != Entries.end();
     }
 
-    // Append to an array
-    void appendToArray(const std::string& key, const TDFValue& val) {
-        auto it = entries.find(key);
-        if (it == entries.end())
-            throw std::runtime_error("Key not found");
+    void AppendToArray(const std::string& key, const TDFValue& val) {
+        auto It = Entries.find(key);
+        if (It == Entries.end()) throw std::runtime_error("Key not found");
 
-        TDFValue& target = it->second;
-
-        if (!isArray(target.type) || elementType(target.type) != val.type)
+        TDFValue& Target = It->second;
+        if (!IsArray(Target.Type) || ElementType(Target.Type) != val.Type)
             throw std::runtime_error("Type mismatch or target is not an array");
 
-        uint32_t len;
-        std::memcpy(&len, target.data.data(), 4);
-        len++;
+        uint32_t Len;
+        std::memcpy(&Len, Target.Data.data(), 4);
+        Len++;
 
-        size_t elemSize = elementSize(target.type, val.type);
+        size_t ElemSize = ElementSize(Target.Type, val.Type);
+        size_t OldLen = ElemSize * (Len - 1);
+        size_t NewSize = 4 + ElemSize * Len;
+        Target.Data.resize(NewSize);
 
-        size_t oldLen = elementSize(target.type, val.type) * (len - 1);
-        size_t newSize = 4 + elemSize * len;
-        target.data.resize(newSize);
+        std::memcpy(Target.Data.data() + 4 + OldLen,
+                    val.Data.data(),
+                    ElemSize);
 
-        std::memcpy(target.data.data() + 4 + oldLen,
-                    val.data.data() + (val.type == TDFType::String ? 0 : 0),
-                    elemSize);
-
-        std::memcpy(target.data.data(), &len, 4);
+        std::memcpy(Target.Data.data(), &Len, 4);
     }
 
-    void deleteFromArray(const std::string& key, size_t idx) {
-        auto it = entries.find(key);
-        if (it == entries.end())
-            throw std::runtime_error("Key not found");
+    void DeleteFromArray(const std::string& key, size_t idx) {
+        auto It = Entries.find(key);
+        if (It == Entries.end()) throw std::runtime_error("Key not found");
 
-        TDFValue& target = it->second;
+        TDFValue& Target = It->second;
+        if (!IsArray(Target.Type)) throw std::runtime_error("Target is not an array");
 
-        if (!isArray(target.type))
-            throw std::runtime_error("Target is not an array");
+        uint32_t Len;
+        std::memcpy(&Len, Target.Data.data(), 4);
+        if (idx >= Len) throw std::runtime_error("Index out of range");
 
-        uint32_t len;
-        std::memcpy(&len, target.data.data(), 4);
-
-        if (idx >= len)
-            throw std::runtime_error("Index out of range");
-
-        size_t elemSize = elementSize(target.type, elementType(target.type));
-
-        for (size_t i = idx + 1; i < len; ++i) {
-            std::memcpy(target.data.data() + 4 + (i - 1) * elemSize,
-                        target.data.data() + 4 + i * elemSize,
-                        elemSize);
+        size_t ElemSize = ElementSize(Target.Type, ElementType(Target.Type));
+        for (size_t I = idx + 1; I < Len; ++I) {
+            std::memcpy(Target.Data.data() + 4 + (I - 1) * ElemSize,
+                        Target.Data.data() + 4 + I * ElemSize,
+                        ElemSize);
         }
 
-        len--;
-        target.data.resize(4 + len * elemSize);
-        std::memcpy(target.data.data(), &len, 4);
+        Len--;
+        Target.Data.resize(4 + Len * ElemSize);
+        std::memcpy(Target.Data.data(), &Len, 4);
     }
 
     // --- Static constructors ---
+    static TDFValue MakeNull() { return { TDFType::Null, {} }; }
+    static TDFValue MakeBool(bool v) { return { TDFType::Bool, { uint8_t(v ? 1 : 0) } }; }
 
-    static TDFValue makeNull() { return { TDFType::Null, {} }; }
-    static TDFValue makeBool(bool v) { return { TDFType::Bool, { uint8_t(v ? 1 : 0) } }; }
-
-    static TDFValue makeInt(int32_t v) {
-        TDFValue t{ TDFType::Int32 };
-        t.data.resize(4);
-        std::memcpy(t.data.data(), &v, sizeof(v));
-        return t;
+    static TDFValue MakeInt(int32_t v) {
+        TDFValue T{ TDFType::Int32, {} };
+        T.Data.resize(4);
+        std::memcpy(T.Data.data(), &v, sizeof(v));
+        return T;
     }
 
-    static TDFValue makeUInt(uint32_t v) {
-        TDFValue t{ TDFType::UInt32 };
-        t.data.resize(4);
-        std::memcpy(t.data.data(), &v, sizeof(v));
-        return t;
+    static TDFValue MakeUInt(uint32_t v) {
+        TDFValue T{ TDFType::UInt32, {} };
+        T.Data.resize(4);
+        std::memcpy(T.Data.data(), &v, sizeof(v));
+        return T;
     }
 
-    static TDFValue makeFloat(float v) {
-        TDFValue t{ TDFType::Float };
-        t.data.resize(4);
-        std::memcpy(t.data.data(), &v, sizeof(v));
-        return t;
+    static TDFValue MakeFloat(float v) {
+        TDFValue T{ TDFType::Float, {} };
+        T.Data.resize(4);
+        std::memcpy(T.Data.data(), &v, sizeof(v));
+        return T;
     }
 
-    static TDFValue makeString(const std::string& s) {
-        TDFValue t{ TDFType::String };
-        t.data.assign(s.begin(), s.end());
-        t.data.push_back(0x00);
-        return t;
+    static TDFValue MakeString(const std::string& s) {
+        TDFValue T{ TDFType::String, {} };
+        T.Data.assign(s.begin(), s.end());
+        T.Data.push_back(0x00);
+        return T;
     }
 
-    static TDFValue makeBoolArray(const std::vector<bool>& arr) {
-        TDFValue t{ TDFType::ArrBool };
-        uint32_t len = (uint32_t)arr.size();
-        t.data.resize(4 + len);
-        std::memcpy(t.data.data(), &len, 4);
-        for (size_t i = 0; i < len; ++i) t.data[4 + i] = arr[i] ? 1 : 0;
-        return t;
+    static TDFValue MakeBoolArray(const std::vector<bool>& arr) {
+        TDFValue T{ TDFType::ArrBool, {} };
+        uint32_t Len = static_cast<uint32_t>(arr.size());
+        T.Data.resize(4 + Len);
+        std::memcpy(T.Data.data(), &Len, 4);
+        for (size_t I = 0; I < Len; ++I) T.Data[4 + I] = arr[I] ? 1 : 0;
+        return T;
     }
 
-    static TDFValue makeIntArray(const std::vector<int32_t>& arr) {
-        TDFValue t{ TDFType::ArrInt32 };
-        uint32_t len = (uint32_t)arr.size();
-        t.data.resize(4 + len * 4);
-        std::memcpy(t.data.data(), &len, 4);
-        std::memcpy(t.data.data() + 4, arr.data(), len * 4);
-        return t;
+    static TDFValue MakeIntArray(const std::vector<int32_t>& arr) {
+        TDFValue T{ TDFType::ArrInt32, {} };
+        uint32_t Len = static_cast<uint32_t>(arr.size());
+        T.Data.resize(4 + Len * 4);
+        std::memcpy(T.Data.data(), &Len, 4);
+        std::memcpy(T.Data.data() + 4, arr.data(), Len * 4);
+        return T;
     }
 
-    static TDFValue makeUIntArray(const std::vector<uint32_t>& arr) {
-        TDFValue t{ TDFType::ArrUInt32 };
-        uint32_t len = (uint32_t)arr.size();
-        t.data.resize(4 + len * 4);
-        std::memcpy(t.data.data(), &len, 4);
-        std::memcpy(t.data.data() + 4, arr.data(), len * 4);
-        return t;
+    static TDFValue MakeUIntArray(const std::vector<uint32_t>& arr) {
+        TDFValue T{ TDFType::ArrUInt32, {} };
+        uint32_t Len = static_cast<uint32_t>(arr.size());
+        T.Data.resize(4 + Len * 4);
+        std::memcpy(T.Data.data(), &Len, 4);
+        std::memcpy(T.Data.data() + 4, arr.data(), Len * 4);
+        return T;
     }
 
-    static TDFValue makeFloatArray(const std::vector<float>& arr) {
-        TDFValue t{ TDFType::ArrFloat };
-        uint32_t len = (uint32_t)arr.size();
-        t.data.resize(4 + len * 4);
-        std::memcpy(t.data.data(), &len, 4);
-        std::memcpy(t.data.data() + 4, arr.data(), len * 4);
-        return t;
+    static TDFValue MakeFloatArray(const std::vector<float>& arr) {
+        TDFValue T{ TDFType::ArrFloat, {} };
+        uint32_t Len = static_cast<uint32_t>(arr.size());
+        T.Data.resize(4 + Len * 4);
+        std::memcpy(T.Data.data(), &Len, 4);
+        std::memcpy(T.Data.data() + 4, arr.data(), Len * 4);
+        return T;
     }
 
-    static TDFValue makeStringArray(const std::vector<std::string>& arr) {
-        TDFValue t{ TDFType::ArrString };
-        std::vector<uint8_t> tmp;
-        uint32_t len = (uint32_t)arr.size();
-        tmp.resize(4);
-        std::memcpy(tmp.data(), &len, 4);
-        for (auto& s : arr) {
-            tmp.insert(tmp.end(), s.begin(), s.end());
-            tmp.push_back(0x00);
+    static TDFValue MakeStringArray(const std::vector<std::string>& arr) {
+        TDFValue T{ TDFType::ArrString, {} };
+        std::vector<uint8_t> Tmp;
+        uint32_t Len = static_cast<uint32_t>(arr.size());
+        Tmp.resize(4);
+        std::memcpy(Tmp.data(), &Len, 4);
+        for (auto& S : arr) {
+            Tmp.insert(Tmp.end(), S.begin(), S.end());
+            Tmp.push_back(0x00);
         }
-        t.data = std::move(tmp);
-        return t;
+        T.Data = std::move(Tmp);
+        return T;
     }
 
 private:
-    static void readValue(std::ifstream& in, TDFValue& v) {
-        if (v.type == TDFType::Null) return;
+    static void ReadValue(std::ifstream& in, TDFValue& v) {
+        if (v.Type == TDFType::Null) return;
 
-        if (isArray(v.type)) {
-            uint32_t len;
-            in.read(reinterpret_cast<char*>(&len), 4);
-            size_t elemSize = elementSize(v.type, elementType(v.type));
-            v.data.resize(4 + elemSize * len);
-            std::memcpy(v.data.data(), &len, 4);
+        if (IsArray(v.Type)) {
+            uint32_t Len;
+            in.read(reinterpret_cast<char*>(&Len), 4);
+            size_t ElemSize = ElementSize(v.Type, ElementType(v.Type));
+            v.Data.resize(4 + ElemSize * Len);
+            std::memcpy(v.Data.data(), &Len, 4);
 
-            if (v.type == TDFType::ArrString) {
-                for (uint32_t i = 0; i < len; ++i) {
-                    char c;
+            if (v.Type == TDFType::ArrString) {
+                for (uint32_t I = 0; I < Len; ++I) {
+                    char C;
                     do {
-                        in.read(&c, 1);
-                        v.data.push_back(c);
-                    } while (c != 0x00);
+                        in.read(&C, 1);
+                        v.Data.push_back(C);
+                    } while (C != 0x00);
                 }
             } else {
-                in.read(reinterpret_cast<char*>(v.data.data() + 4), elemSize * len);
+                in.read(reinterpret_cast<char*>(v.Data.data() + 4), ElemSize * Len);
             }
             return;
         }
 
-        if (v.type == TDFType::String) {
-            uint8_t c;
+        if (v.Type == TDFType::String) {
+            uint8_t C;
             do {
-                in.read(reinterpret_cast<char*>(&c), 1);
-                v.data.push_back(c);
-            } while (c != 0x00);
+                in.read(reinterpret_cast<char*>(&C), 1);
+                v.Data.push_back(C);
+            } while (C != 0x00);
             return;
         }
 
-        size_t sz = elementSize(v.type, v.type);
-        v.data.resize(sz);
-        in.read(reinterpret_cast<char*>(v.data.data()), sz);
+        size_t Sz = ElementSize(v.Type, v.Type);
+        v.Data.resize(Sz);
+        in.read(reinterpret_cast<char*>(v.Data.data()), Sz);
     }
 
-    static bool isArray(TDFType t) {
+    static bool IsArray(TDFType t) {
         return (uint8_t)t >= 0xE0 && (uint8_t)t <= 0xE4;
     }
 
-    static TDFType elementType(TDFType t) {
+    static TDFType ElementType(TDFType t) {
         switch (t) {
             case TDFType::ArrBool:   return TDFType::Bool;
             case TDFType::ArrInt32:  return TDFType::Int32;
@@ -315,13 +301,13 @@ private:
         }
     }
 
-    static size_t elementSize(TDFType arrType, TDFType elemType) {
+    static size_t ElementSize([[maybe_unused]] TDFType arrType, TDFType elemType) {
         switch (elemType) {
             case TDFType::Bool:   return 1;
             case TDFType::Int32:
             case TDFType::UInt32:
             case TDFType::Float:  return 4;
-            case TDFType::String: return 1; // strings are variable, handled separately
+            case TDFType::String: return 1;
             default: return 0;
         }
     }
