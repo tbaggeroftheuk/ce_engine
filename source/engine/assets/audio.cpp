@@ -11,7 +11,7 @@ extern "C" {
     #include <raylib.h>
 }
 
-namespace CE::Assets::Textures {
+namespace CE::Assets::Audio {
     static std::unordered_map<std::string, Sound> SFXs;
     static std::unordered_map<std::string, Wave> SFX_Wavs;
     static std::unordered_map<std::string, Music> Musics;
