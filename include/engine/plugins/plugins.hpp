@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cstdint>
+#include <cfloat>
 #include <string>
 #include <vector>
 
@@ -26,6 +27,11 @@ extern "C" {
 #define CE_LOG_DEBUG ((uint32_t)2)
 #define CE_LOG_WARN ((uint32_t)3)
 #define CE_LOG_ERROR ((uint32_t)4)
+
+typedef float f32;
+static_assert(sizeof(f32) == 4, "f32 must be 32-bit");
+static_assert(FLT_RADIX == 2);
+static_assert(FLT_MANT_DIG == 24);
 
 struct CE_Funcs {
     uint32_t Version;

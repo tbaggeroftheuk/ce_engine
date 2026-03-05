@@ -1,5 +1,0 @@
-
-
-namespace CE::UI::DebugMenu {
-
-}

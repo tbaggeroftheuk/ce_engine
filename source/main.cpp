@@ -2,7 +2,8 @@
 #include <string>
 
 #include "common/console_link.hpp"
-#include "third_party/raylib_cpp/raylib-cpp.hpp"
+
+#include "engine/common.hpp"
 #include "globals.hpp"
 #include "bootstrap.hpp"
 
@@ -24,6 +25,14 @@ int main(int argc, char *argv[]) {
 
         if(std::string(argv[I]) == "--log2file") { // Log to a file instead of terminal
             log2file();
+        }
+
+        if(std::string(argv[I]) == "--licences") { // Display licences to be legals
+            OpenDebugConsole();
+            printLicences();
+            std::cout << "Press enter to continue...";
+            std::cin.get(); // wait for for enter to be pressed
+            return 0;
         }
     }
 

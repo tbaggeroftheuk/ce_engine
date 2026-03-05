@@ -11,7 +11,7 @@ CE_EXPORT CE_PluginInfo* CE_GetPluginInfo() {
     return &info;
 }
 
-CE_EXPORT void CE_PluginInit(CE_Funcs* FuncPtr, Globals* GlobalPtr) {
+CE_EXPORT void CE_PluginInit(CE_Funcs* FuncPtr, CE::Plugins::Globals* GlobalPtr) {
     gGlobal = GlobalPtr;
     gFunc = FuncPtr;
     gFunc->Log(LOG_INFO, "The plugin has got the globals!");

@@ -1,9 +1,140 @@
-#include <stdint.h>
+#include <cfloat>
+
+CE::Plugins::Globals* gGlobal = nullptr;
+
+namespace CE::Plugins {
+    struct Globals {
+
+    };
+}
+
+namespace CE::Input {
+    enum Keys : uint32_t   {
+        // Alphanumeric keys
+        KEY_NULL            = 0,
+        KEY_APOSTROPHE      = 39,
+        KEY_COMMA           = 44,
+        KEY_MINUS           = 45,
+        KEY_PERIOD          = 46,
+        KEY_SLASH           = 47,
+        KEY_ZERO            = 48,
+        KEY_ONE             = 49,
+        KEY_TWO             = 50,
+        KEY_THREE           = 51,
+        KEY_FOUR            = 52,
+        KEY_FIVE            = 53,
+        KEY_SIX             = 54,
+        KEY_SEVEN           = 55,
+        KEY_EIGHT           = 56,
+        KEY_NINE            = 57,
+        KEY_SEMICOLON       = 59,
+        KEY_EQUAL           = 61,
+        KEY_A               = 65,
+        KEY_B               = 66,
+        KEY_C               = 67,
+        KEY_D               = 68,
+        KEY_E               = 69,
+        KEY_F               = 70,
+        KEY_G               = 71,
+        KEY_H               = 72,
+        KEY_I               = 73,
+        KEY_J               = 74,
+        KEY_K               = 75,
+        KEY_L               = 76,
+        KEY_M               = 77,
+        KEY_N               = 78,
+        KEY_O               = 79,
+        KEY_P               = 80,
+        KEY_Q               = 81,
+        KEY_R               = 82,
+        KEY_S               = 83,
+        KEY_T               = 84,
+        KEY_U               = 85,
+        KEY_V               = 86,
+        KEY_W               = 87,
+        KEY_X               = 88,
+        KEY_Y               = 89,
+        KEY_Z               = 90,
+        KEY_LEFT_BRACKET    = 91,
+        KEY_BACKSLASH       = 92,
+        KEY_RIGHT_BRACKET   = 93,
+        KEY_GRAVE           = 96,
+
+        // Function keys
+        KEY_SPACE           = 32,
+        KEY_ESCAPE          = 256,
+        KEY_ENTER           = 257,
+        KEY_TAB             = 258,
+        KEY_BACKSPACE       = 259,
+        KEY_INSERT          = 260,
+        KEY_DELETE          = 261,
+        KEY_RIGHT           = 262,
+        KEY_LEFT            = 263,
+        KEY_DOWN            = 264,
+        KEY_UP              = 265,
+        KEY_PAGE_UP         = 266,
+        KEY_PAGE_DOWN       = 267,
+        KEY_HOME            = 268,
+        KEY_END             = 269,
+        KEY_CAPS_LOCK       = 280,
+        KEY_SCROLL_LOCK     = 281,
+        KEY_NUM_LOCK        = 282,
+        KEY_PRINT_SCREEN    = 283,
+        KEY_PAUSE           = 284,
+        KEY_F1              = 290,
+        KEY_F2              = 291,
+        KEY_F3              = 292,
+        KEY_F4              = 293,
+        KEY_F5              = 294,
+        KEY_F6              = 295,
+        KEY_F7              = 296,
+        KEY_F8              = 297,
+        KEY_F9              = 298,
+        KEY_F10             = 299,
+        KEY_F11             = 300,
+        KEY_F12             = 301,
+        KEY_LEFT_SHIFT      = 340,
+        KEY_LEFT_CONTROL    = 341,
+        KEY_LEFT_ALT        = 342,
+        KEY_LEFT_SUPER      = 343,
+        KEY_RIGHT_SHIFT     = 344,
+        KEY_RIGHT_CONTROL   = 345,
+        KEY_RIGHT_ALT       = 346,
+        KEY_RIGHT_SUPER     = 347,
+        KEY_KB_MENU         = 348,
+
+        // Keypad keys
+        KEY_KP_0            = 320,
+        KEY_KP_1            = 321,
+        KEY_KP_2            = 322,
+        KEY_KP_3            = 323,
+        KEY_KP_4            = 324,
+        KEY_KP_5            = 325,
+        KEY_KP_6            = 326,
+        KEY_KP_7            = 327,
+        KEY_KP_8            = 328,
+        KEY_KP_9            = 329,
+        KEY_KP_DECIMAL      = 330,
+        KEY_KP_DIVIDE       = 331,
+        KEY_KP_MULTIPLY     = 332,
+        KEY_KP_SUBTRACT     = 333,
+        KEY_KP_ADD          = 334,
+        KEY_KP_ENTER        = 335,
+        KEY_KP_EQUAL        = 336,
+
+        // Android buttons
+        KEY_BACK            = 4,
+        KEY_MENU            = 5,
+        KEY_VOLUME_UP       = 24,
+        KEY_VOLUME_DOWN     = 25
+    };
+}
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
+#include <stdint.h>
 #if defined(_WIN32) || defined(_WIN64)
     #define CE_EXPORT extern "C" __declspec(dllexport)
 #elif defined(__GNUC__) || defined(__clang__)
@@ -17,127 +148,27 @@ extern "C" {
 #define LOG_WARN ((uint32_t)3)
 #define LOG_ERROR ((uint32_t)4)
 
-// Alphanumeric keys
-#define KEY_NULL            ((uint32_t)0)
-#define KEY_APOSTROPHE      ((uint32_t)39)
-#define KEY_COMMA           ((uint32_t)44)
-#define KEY_MINUS           ((uint32_t)45)
-#define KEY_PERIOD          ((uint32_t)46)
-#define KEY_SLASH           ((uint32_t)47)
-#define KEY_ZERO            ((uint32_t)48)
-#define KEY_ONE             ((uint32_t)49)
-#define KEY_TWO             ((uint32_t)50)
-#define KEY_THREE           ((uint32_t)51)
-#define KEY_FOUR            ((uint32_t)52)
-#define KEY_FIVE            ((uint32_t)53)
-#define KEY_SIX             ((uint32_t)54)
-#define KEY_SEVEN           ((uint32_t)55)
-#define KEY_EIGHT           ((uint32_t)56)
-#define KEY_NINE            ((uint32_t)57)
-#define KEY_SEMICOLON       ((uint32_t)59)
-#define KEY_EQUAL           ((uint32_t)61)
-#define KEY_A               ((uint32_t)65)
-#define KEY_B               ((uint32_t)66)
-#define KEY_C               ((uint32_t)67)
-#define KEY_D               ((uint32_t)68)
-#define KEY_E               ((uint32_t)69)
-#define KEY_F               ((uint32_t)70)
-#define KEY_G               ((uint32_t)71)
-#define KEY_H               ((uint32_t)72)
-#define KEY_I               ((uint32_t)73)
-#define KEY_J               ((uint32_t)74)
-#define KEY_K               ((uint32_t)75)
-#define KEY_L               ((uint32_t)76)
-#define KEY_M               ((uint32_t)77)
-#define KEY_N               ((uint32_t)78)
-#define KEY_O               ((uint32_t)79)
-#define KEY_P               ((uint32_t)80)
-#define KEY_Q               ((uint32_t)81)
-#define KEY_R               ((uint32_t)82)
-#define KEY_S               ((uint32_t)83)
-#define KEY_T               ((uint32_t)84)
-#define KEY_U               ((uint32_t)85)
-#define KEY_V               ((uint32_t)86)
-#define KEY_W               ((uint32_t)87)
-#define KEY_X               ((uint32_t)88)
-#define KEY_Y               ((uint32_t)89)
-#define KEY_Z               ((uint32_t)90)
-#define KEY_LEFT_BRACKET    ((uint32_t)91)
-#define KEY_BACKSLASH       ((uint32_t)92)
-#define KEY_RIGHT_BRACKET   ((uint32_t)93)
-#define KEY_GRAVE           ((uint32_t)96)
+typedef float f32;
+static_assert(sizeof(f32) == 4, "f32 must be 32-bit");
+static_assert(FLT_RADIX == 2);
+static_assert(FLT_MANT_DIG == 24);
 
-// Function keys
-#define KEY_SPACE           ((uint32_t)32)
-#define KEY_ESCAPE          ((uint32_t)256)
-#define KEY_ENTER           ((uint32_t)257)
-#define KEY_TAB             ((uint32_t)258)
-#define KEY_BACKSPACE       ((uint32_t)259)
-#define KEY_INSERT          ((uint32_t)260)
-#define KEY_DELETE          ((uint32_t)261)
-#define KEY_RIGHT           ((uint32_t)262)
-#define KEY_LEFT            ((uint32_t)263)
-#define KEY_DOWN            ((uint32_t)264)
-#define KEY_UP              ((uint32_t)265)
-#define KEY_PAGE_UP         ((uint32_t)266)
-#define KEY_PAGE_DOWN       ((uint32_t)267)
-#define KEY_HOME            ((uint32_t)268)
-#define KEY_END             ((uint32_t)269)
-#define KEY_CAPS_LOCK       ((uint32_t)280)
-#define KEY_SCROLL_LOCK     ((uint32_t)281)
-#define KEY_NUM_LOCK        ((uint32_t)282)
-#define KEY_PRINT_SCREEN    ((uint32_t)283)
-#define KEY_PAUSE           ((uint32_t)284)
-#define KEY_F1              ((uint32_t)290)
-#define KEY_F2              ((uint32_t)291)
-#define KEY_F3              ((uint32_t)292)
-#define KEY_F4              ((uint32_t)293)
-#define KEY_F5              ((uint32_t)294)
-#define KEY_F6              ((uint32_t)295)
-#define KEY_F7              ((uint32_t)296)
-#define KEY_F8              ((uint32_t)297)
-#define KEY_F9              ((uint32_t)298)
-#define KEY_F10             ((uint32_t)299)
-#define KEY_F11             ((uint32_t)300)
-#define KEY_F12             ((uint32_t)301)
-#define KEY_LEFT_SHIFT      ((uint32_t)340)
-#define KEY_LEFT_CONTROL    ((uint32_t)341)
-#define KEY_LEFT_ALT        ((uint32_t)342)
-#define KEY_LEFT_SUPER      ((uint32_t)343)
-#define KEY_RIGHT_SHIFT     ((uint32_t)344)
-#define KEY_RIGHT_CONTROL   ((uint32_t)345)
-#define KEY_RIGHT_ALT       ((uint32_t)346)
-#define KEY_RIGHT_SUPER     ((uint32_t)347)
-#define KEY_KB_MENU         ((uint32_t)348)
+// Crap I've stolen from raylib.h
 
-// Keypad keys
-#define KEY_KP_0            ((uint32_t)320)
-#define KEY_KP_1            ((uint32_t)321)
-#define KEY_KP_2            ((uint32_t)322)
-#define KEY_KP_3            ((uint32_t)323)
-#define KEY_KP_4            ((uint32_t)324)
-#define KEY_KP_5            ((uint32_t)325)
-#define KEY_KP_6            ((uint32_t)326)
-#define KEY_KP_7            ((uint32_t)327)
-#define KEY_KP_8            ((uint32_t)328)
-#define KEY_KP_9            ((uint32_t)329)
-#define KEY_KP_DECIMAL      ((uint32_t)330)
-#define KEY_KP_DIVIDE       ((uint32_t)331)
-#define KEY_KP_MULTIPLY     ((uint32_t)332)
-#define KEY_KP_SUBTRACT     ((uint32_t)333)
-#define KEY_KP_ADD          ((uint32_t)334)
-#define KEY_KP_ENTER        ((uint32_t)335)
-#define KEY_KP_EQUAL        ((uint32_t)336)
-
-// Android buttons
-#define KEY_BACK            ((uint32_t)4)
-#define KEY_MENU            ((uint32_t)5)
-#define KEY_VOLUME_UP       ((uint32_t)24)
-#define KEY_VOLUME_DOWN     ((uint32_t)25)
-
-struct Globals {
-
+typedef struct Vector2 {
+    f32 x;
+    f32 y;
 };
+
+// Color, 4 components, R8G8B8A8 (32bit)
+typedef struct Color {
+    unsigned char r;        // Color red value
+    unsigned char g;        // Color green value
+    unsigned char b;        // Color blue value
+    unsigned char a;        // Color alpha value
+} Color;
+
+// Stuff that is not stolen from raylib.h
 
 struct CE_Funcs {
     uint32_t Version;
@@ -160,7 +191,6 @@ struct CE_Funcs {
     void (*Log)(uint32_t level, const char* message);
 };
 
-Globals* gGlobal = nullptr;
 CE_Funcs* gFunc = nullptr;
 
 typedef struct CE_PluginInfo {

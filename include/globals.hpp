@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include "third_party/raylib_cpp/raylib-cpp.hpp"
 #include "common/tdf.hpp"
 
 #define DEFAULT_BUFFER 500
@@ -59,4 +58,5 @@ namespace CE {
 namespace CE::Flags {
     inline bool show_plugin_logs = true;
     inline bool bypass_data_file_crc_crash = false;
+    inline bool debug_win = false;
 }

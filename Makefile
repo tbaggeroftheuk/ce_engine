@@ -39,22 +39,23 @@ ifeq ($(OS),Windows_NT)
 	EXE := $(TARGET).exe
 	PLATFORM_FLAGS := -DPLATFORM_WINDOWS
 else
-	CXX := g++
+	CXX := clang++
 	PLATFORM_FLAGS :=
 endif
 
 CXXFLAGS := -Wall -Wextra -std=c++20 \
-	-I$(INCLUDE_DIR) \
-	$(PLATFORM_FLAGS) \
-	-DENGINE_BUILT_ON_OS=$(HOST_OS_ESCAPED)
+    -I$(INCLUDE_DIR) \
+    -I$(INCLUDE_DIR)/third_party \
+    $(PLATFORM_FLAGS) \
+    -DENGINE_BUILT_ON_OS=$(HOST_OS_ESCAPED)
 
 # =========================
 # Linker flags
 # =========================
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32
+	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -limgui
 else
-	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi
+	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi -limgui
 
 endif
 
