@@ -92,19 +92,19 @@ namespace CE::Plugins {
             #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__) // I bless apon you, CROSS PLATFORM!
                         if (Ext != ".so") continue;
             #elif defined(__APPLE__)
-                        if (ext != ".dylib") continue;
+                        if (Ext != ".dylib") continue;
             #elif defined(_WIN32)
-                        if (ext != ".dll") continue;
+                        if (Ext != ".dll") continue;
             #else
                         continue;
             #endif
 
             std::string FullPath = Entry.path().string();
-            std::cout << "CE-PluginLoader: Loading plugin: " << FullPath << "\n";
+            std::cout << "INFO: CE-PluginLoader: Loading plugin: " << FullPath << "\n";
 
             lib_handle Lib = LOAD_LIB(FullPath.c_str());
             if (!Lib) {
-                std::cerr << "CE-PluginLoader: Failed to load library: " << FullPath << "\n";
+                std::cerr << "ERROR: CE-PluginLoader: Failed to load library: " << FullPath << "\n";
                 continue;
             }
 
@@ -121,7 +121,7 @@ namespace CE::Plugins {
             auto UpdatePauseMenuUI = (fn_PluginPauseMenuUpdateUI)GET_SYM(Lib, "CE_PluginUpdatePauseMenuUI");
 
             if (!GetInfo || !InitFunc || !UpdateFunc || !ShutdownFunc) {
-                std::cerr << "INFO: CE-PluginLoader: Missing required plugin exports: " << FullPath << "\n";
+                std::cerr << "INFO: CE-PluginLoader: Missing required plugin exports!" << FullPath << "\n";
                 std::cerr << "INFO: CE-PluginLoader: Required Exports are\n";
                 CLOSE_LIB(Lib);
                 continue;
@@ -149,11 +149,10 @@ namespace CE::Plugins {
                 else if (Info->Capabilities & CE_Lua_Injects) CapName = "LUA FUNCTION INJECTS";
 
                 CE::PluginAPI::Log(CE_LOG_WARN,
-                    "THE MODULE: %s HAS THE CAPABILITY FOR %s BUT DOES NOT HAVE THE REQUIRED FUNCTION.\nPLEASE ADD THE FUNCTION OR REMOVE THE CAPABILITY",
+                    "THE MODULE: %s HAS THE CAPABILITY FOR %s BUT DOES NOT HAVE THE REQUIRED EXPORT.\nPLEASE ADD THE FUNCTION OR REMOVE THE CAPABILITY",
                     Info->Name, CapName
                 );
-
-                CLOSE_LIB(Lib);
+                if(!CE::Debug) CLOSE_LIB(Lib);
                 continue;
             }
 
@@ -209,7 +208,7 @@ namespace CE::Plugins {
         }
 
         if (g_Plugins.empty()) {
-            std::cout << "CE-Modules: No plugins found in " << PluginsPath << "\n";
+            std::cout << "INFO: PluginLoader: No plugins found, the plugin was missing a required export!\n";
             return;
         }
     }

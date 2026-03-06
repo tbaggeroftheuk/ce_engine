@@ -9,19 +9,6 @@ extern "C" {
     #include <raylib.h>
 }
 
-#ifdef _WIN32
-    #include <windows.h>
-    #define LOAD_LIB(name) LoadLibraryA(name)
-    #define GET_SYM(lib, name) GetProcAddress(lib, name)
-    #define CLOSE_LIB(lib) FreeLibrary(lib)
-    typedef HMODULE lib_handle;
-#else
-    #include <dlfcn.h>
-    #define LOAD_LIB(name) dlopen(name, RTLD_LAZY)
-    #define GET_SYM(lib, name) dlsym(lib, name)
-    #define CLOSE_LIB(lib) dlclose(lib)
-    typedef void* lib_handle;
-#endif
 
 #define CE_LOG_INFO ((uint32_t)1)
 #define CE_LOG_DEBUG ((uint32_t)2)

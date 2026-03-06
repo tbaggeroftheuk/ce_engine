@@ -9,18 +9,17 @@ extern "C" {
     #include <raylib.h>
 }
 
-
-
 namespace CE {
     // General stuff
     inline Vector2 MousePos;
-    inline std::string GameState = "MainMenu";
     inline std::string game_name = "CE Runtime 0.1";
     inline bool Debug = true;
     inline int should_exit = 0;
 
     inline std::string engine_ver = "Build 0.1";
     inline int int_engine_ver = 1;
+
+    inline int MaxFPS = 60;
 
     struct Globals {
 
@@ -46,12 +45,14 @@ namespace CE {
     };
     inline Setting Settings;
 
-    enum Gamestate {
+    enum class GameState { 
+        None,
         MainMenu,
         PauseMenu,
-        InGame,
-        None
+        InGame
     };
+
+    inline GameState currentGameState = GameState::None;
 
 }
 

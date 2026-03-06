@@ -20,18 +20,19 @@ namespace CE::Engine {
             ClearBackground(WHITE);
             CE::MousePos = GetMousePosition();
             
-            if (CE::Gamestate::MainMenu != CE::Gamestate::None) {
-                CE::Plugins::UpdateMainMenuUI();
-            } else if (CE::Gamestate::InGame != CE::Gamestate::None ) {
-                CE::Plugins::UpdateInGame();
-                CE::Plugins::UpdateInGameUI();
-            } else if (CE::Gamestate::PauseMenu != CE::Gamestate::None ) {
-                CE::Plugins::UpdatePauseMenuUI();
-            }
+        if (currentGameState == GameState::MainMenu) {
+            CE::Plugins::UpdateMainMenuUI();
+        } else if (currentGameState == GameState::InGame) {
+            CE::Plugins::UpdateInGame();
+            CE::Plugins::UpdateInGameUI();
+        } else if (currentGameState == GameState::PauseMenu) {
+            CE::Plugins::UpdatePauseMenuUI();
+        }
 
             rlImGuiBegin();  // start ImGui frame
             if(CE::Debug) {
                 DebugUI();
+                DebugConsole();
             }
             rlImGuiEnd(); 
 

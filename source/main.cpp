@@ -7,6 +7,29 @@
 #include "globals.hpp"
 #include "bootstrap.hpp"
 
+extern "C" {
+    #include "raylib.h"
+}
+
+
+void RaylibLogCallback(int logLevel, const char* text, va_list args) {
+    char buffer[2048];
+    vsnprintf(buffer, sizeof(buffer), text, args);
+
+    const char* levelStr = "";
+    switch (logLevel) {
+        case LOG_TRACE:   levelStr = "TRACE"; break;
+        case LOG_DEBUG:   levelStr = "DEBUG"; break;
+        case LOG_INFO:    levelStr = "INFO"; break;
+        case LOG_WARNING: levelStr = "WARNING"; break;
+        case LOG_ERROR:   levelStr = "ERROR"; break;
+        case LOG_FATAL:   levelStr = "FATAL"; break;
+        default:          levelStr = "UNKNOWN"; break;
+    }
+
+    std::cout << levelStr << ": " << buffer << std::endl;
+}
+
 int main(int argc, char *argv[]) {
 
     // Check for flags
@@ -38,6 +61,8 @@ int main(int argc, char *argv[]) {
 
     if (CE::Debug) {
         OpenDebugConsole();
+        SetTraceLogCallback(RaylibLogCallback);
+        HookImGuiConsole();
         SetTraceLogLevel(LOG_ALL);
         TraceLog(LOG_INFO, "CE: Debug is currently activated");
     } else {
