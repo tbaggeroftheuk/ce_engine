@@ -102,6 +102,26 @@ namespace CE::Assets::Textures {
         DrawTexture(Get(path), posX, posY, tint);
     }
 
+    int LoadedTextures() {
+        return Textures.size();
+    }
+
+    int LoadedTexturesNoError() {
+        int count = 0;
+            for (auto& [name, tex] : Textures) {
+                if (tex.id != ErrorTexture.id) count++;
+            }
+        return count;
+    }
+
+    int LoadedTexturesError() {
+        int count = 0;
+            for (auto& [name, tex] : Textures) {
+                if (tex.id == ErrorTexture.id) count++;
+            }
+        return count; 
+    }
+
 
     void Unload(const std::string& name) {
         auto Lst = Textures.find(name);

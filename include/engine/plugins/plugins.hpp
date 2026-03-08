@@ -5,10 +5,11 @@
 #include <string>
 #include <vector>
 
-extern "C" {
-    #include <raylib.h>
-}
-
+#ifdef _WIN32
+    #include "engine/platform/windows.hpp"
+#else
+    #include "engine/platform/posix.hpp"
+#endif
 
 #define CE_LOG_INFO ((uint32_t)1)
 #define CE_LOG_DEBUG ((uint32_t)2)

@@ -19,7 +19,10 @@ namespace CE::Engine {
             BeginDrawing();
             ClearBackground(WHITE);
             CE::MousePos = GetMousePosition();
-            
+            CE::Assets::Textures::Draw("NOEXISTINGS", 100, 100);
+            CE::Assets::Textures::Draw("brick.png", 100, 200);
+
+
         if (currentGameState == GameState::MainMenu) {
             CE::Plugins::UpdateMainMenuUI();
         } else if (currentGameState == GameState::InGame) {

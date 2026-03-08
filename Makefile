@@ -35,7 +35,7 @@ HOST_OS_ESCAPED := "\"$(HOST_OS)\""
 # Compiler & flags
 # =========================
 ifeq ($(OS),Windows_NT)
-	CXX := x86_64-w64-mingw32-g++
+	CXX := clang++
 	EXE := $(TARGET).exe
 	PLATFORM_FLAGS := -DPLATFORM_WINDOWS
 else
@@ -53,7 +53,7 @@ CXXFLAGS := -Wall -Wextra -std=c++20 \
 # Linker flags
 # =========================
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -limgui
+	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -Iinclude/third_party/imgui 
 else
 	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi -limgui
 

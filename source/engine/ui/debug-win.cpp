@@ -7,12 +7,13 @@
 
 #include "engine/ui.hpp"
 
-
 extern "C" {
     #include <raylib.h>
 
 }
 #include "globals.hpp"
+#include "engine/assets/assets.hpp"
+#include "common/MemoryUsage.hpp"
 
 const char* GetGameStateName(CE::GameState state) {
     switch (state) {
@@ -28,6 +29,7 @@ float minFps = 9999.0f;
 float highFps = 0.00f;
 
 void showFPS() {
+    ImGui::Spacing();
     int CurrentFPS = GetFPS();
  
     if (CurrentFPS > 5 && CurrentFPS < minFps) minFps = CurrentFPS;
@@ -35,10 +37,14 @@ void showFPS() {
     if (highFps > CE::MaxFPS) highFps = CE::MaxFPS;
 
     avgFps = CurrentFPS;
-
+    ImGui::Spacing();
+    ImGui::Text("Max FPS: %i", CE::MaxFPS);
+    ImGui::Spacing();
     ImGui::Text("Avg FPS: %f", avgFps);
+    ImGui::Spacing();
     ImGui::Text("Min FPS: %f", minFps);
-    ImGui::Text("Max FPS: %f", highFps);
+    ImGui::Spacing();
+    ImGui::Text("High FPS: %f", highFps);
 }
 
 void showFlags() {
@@ -65,26 +71,75 @@ void showGlobals() {
     if (ImGui::IsItemHovered()) ImGui::SetTooltip("Click to copy to clipboard");
 }
 
+void showLoadedTextures() {
+    ImGui::Spacing();
+    ImGui::Text("Current error textures: %i", CE::Assets::Textures::LoadedTexturesError());
+    ImGui::Text("Current loaded textures: %i", CE::Assets::Textures::LoadedTexturesNoError());
+    ImGui::Text("Current loaded textures in total: %i", CE::Assets::Textures::LoadedTextures());
+}
+
+void showMemoryUsage() {
+    size_t stackLimit = MemoryUsage::getStackLimit();
+    size_t heapUsed   = MemoryUsage::getHeapUsage();
+    size_t resident   = MemoryUsage::getResidentMemory();
+    double stackMB    = stackLimit / (1024.0 * 1024.0);
+    double heapMB     = heapUsed / (1024.0 * 1024.0);
+    double residentMB = resident / (1024.0 * 1024.0);
+
+    ImGui::Text("Stack Limit: %.2f MB", stackMB);
+    ImGui::Text("Heap / Private Memory: %.2f MB", heapMB);
+    ImGui::Text("Resident Memory (RAM): %.2f MB", residentMB);
+}
+
 void DebugUI() {
     ImGui::SetNextWindowSize(ImVec2(400, 300), ImGuiCond_FirstUseEver);
     ImGui::Begin("Cattle Debug");
-    ImGui::Text("Current mousePos: x = %f, y = %f\n", CE::MousePos.x, CE::MousePos.y);
+
+    ImGui::Text("Current mousePos: x = %f, y = %f", CE::MousePos.x, CE::MousePos.y);
     ImGui::Text("Current state: %s", GetGameStateName(CE::currentGameState));
-    showFPS();
+    ImGui::Spacing();
+    ImGui::Text("Game name: %s", CE::game_name.c_str());
+    ImGui::Text("Engine version string: %s", CE::engine_ver.c_str());
+    ImGui::Text("Engine version int: %i", CE::int_engine_ver);
 
     ImGui::Spacing();
     ImGui::Separator();
     ImGui::Spacing();
 
-    ImGui::Text("Enabled Flags: ");
-    showFlags();
+    if (ImGui::BeginTabBar("DebugTabs"))
+    {
+        if (ImGui::BeginTabItem("FPS"))
+        {
+            showFPS();
+            ImGui::EndTabItem();
+        }
 
-    ImGui::Spacing();
-    ImGui::Separator();
-    ImGui::Spacing();
+        if (ImGui::BeginTabItem("Assets"))
+        {
+            showLoadedTextures();
+            ImGui::EndTabItem();
+        }
 
-    ImGui::Text("Core FS Paths");
-    showGlobals();
+        if (ImGui::BeginTabItem("Flags"))
+        {
+            showFlags();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Paths"))
+        {
+            showGlobals();
+            ImGui::EndTabItem();
+        }
+
+        if (ImGui::BeginTabItem("Memory"))
+        {
+            showMemoryUsage();
+            ImGui::EndTabItem();
+        }
+
+        ImGui::EndTabBar();
+    }
 
     ImGui::End();
 }

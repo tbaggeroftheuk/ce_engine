@@ -1,8 +1,7 @@
 #include <cfloat>
+#include <cstdint>
 
-CE::Plugins::Globals* gGlobal = nullptr;
-
-namespace CE::Plugins {
+namespace CE::Plugin {
     struct Globals {
 
     };
@@ -129,7 +128,7 @@ namespace CE::Input {
         KEY_VOLUME_DOWN     = 25
     };
 }
-
+CE::Plugin::Globals* gGlobal = nullptr;
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -155,13 +154,13 @@ static_assert(FLT_MANT_DIG == 24);
 
 // Crap I've stolen from raylib.h
 
-typedef struct Vector2 {
+struct Vector2 {
     f32 x;
     f32 y;
 };
 
 // Color, 4 components, R8G8B8A8 (32bit)
-typedef struct Color {
+struct Color {
     unsigned char r;        // Color red value
     unsigned char g;        // Color green value
     unsigned char b;        // Color blue value
