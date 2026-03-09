@@ -1,8 +1,19 @@
-#include "third_party/sol/sol.hpp"
+#pragma once
 
-namespace CE::Lua {
-    sol::state lua_state;
+extern "C" {
+    #include "lua.h"
+    #include "lauxlib.h" 
+    #include "lualib.h" 
 }
+namespace CE::Scripting {
+    inline lua_State* lua = luaL_newstate();
+}
+
 namespace CE::Lua::Functions {
     void ExposeFunctions();
+}
+
+namespace CE::Lua {
+    void init();
+    void LoadStartup();
 }

@@ -9,6 +9,7 @@
 #include "common/console_link.hpp" // So we can hook imgui console up
 #include "engine/assets/assets.hpp" // to init the textures
 #include "engine/plugins/plugins.hpp" // to init plugins
+#include "engine/lua.hpp" // To int and run lua
 #include "globals.hpp"
 
 extern "C" {
@@ -221,6 +222,8 @@ void SetupPaths() {
         CE::Assets::Textures::Init();
         CE::Plugins::Init();
         CE::Plugins::LoadModules();
+        CE::Lua::init();
+        CE::Lua::LoadStartup();
         CE::Engine::Main();
     }
 }

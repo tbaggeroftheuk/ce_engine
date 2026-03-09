@@ -2,12 +2,12 @@
 # Project settings
 # =========================
 TARGET        := ce_engine
+BUILD_DIR     := build
 ASSET_FOLDER  := assets
 SCRIPT_FOLDER := scripts
 SRC_DIR       := source
 INCLUDE_DIR   := include
-
-SRC := $(shell find $(SRC_DIR) -type f \( -name '*.cpp' -o -name '*.c' \) )
+MAKEFLAGS += -j4
 EXE := $(TARGET)
 
 # =========================
@@ -32,20 +32,38 @@ endif
 HOST_OS_ESCAPED := "\"$(HOST_OS)\""
 
 # =========================
-# Compiler & flags
+# Compiler
 # =========================
+CC  := clang
+CXX := clang++
+
 ifeq ($(OS),Windows_NT)
-	CXX := clang++
 	EXE := $(TARGET).exe
 	PLATFORM_FLAGS := -DPLATFORM_WINDOWS
 else
-	CXX := clang++
 	PLATFORM_FLAGS :=
 endif
 
+# =========================
+# Sources
+# =========================
+CPP_SRC := $(shell find $(SRC_DIR) -name '*.cpp')
+C_SRC   := $(shell find $(SRC_DIR) -name '*.c')
+
+CPP_OBJ := $(patsubst $(SRC_DIR)/%.cpp,$(BUILD_DIR)/%.o,$(CPP_SRC))
+C_OBJ   := $(patsubst $(SRC_DIR)/%.c,$(BUILD_DIR)/%.o,$(C_SRC))
+OBJ := $(CPP_OBJ) $(C_OBJ)
+
+# =========================
+# Original C / C++ flags (preserved)
+# =========================
+CFLAGS := -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/third_party -I$(INCLUDE_DIR)/third_party/lua \
+
 CXXFLAGS := -Wall -Wextra -std=c++20 \
-    -I$(INCLUDE_DIR) \
     -I$(INCLUDE_DIR)/third_party \
+	-I$(INCLUDE_DIR)/third_party/imgui \
+	-I$(INCLUDE_DIR)/third_party/lua \
+    -I$(INCLUDE_DIR) \
     $(PLATFORM_FLAGS) \
     -DENGINE_BUILT_ON_OS=$(HOST_OS_ESCAPED)
 
@@ -53,63 +71,76 @@ CXXFLAGS := -Wall -Wextra -std=c++20 \
 # Linker flags
 # =========================
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -Iinclude/third_party/imgui 
+	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -Iinclude/third_party/imgui -Iinclude/third_party/lua
 else
-	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi -limgui
-
+	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi -Iinclude/third_party/imgui -Iinclude/third_party/lua
 endif
 
-# =========================
-# Windows subsystem: hide console for non-debug builds
-# =========================
+# Windows GUI subsystem
 ifeq ($(OS),Windows_NT)
 	ifeq ($(filter debug,$(MAKECMDGOALS)),)
-		# Normal build → GUI subsystem (no console)
 		SUBSYSTEM_FLAG := -Wl,-subsystem,windows
 	else
-		# Debug build → console
 		SUBSYSTEM_FLAG :=
 	endif
 endif
 
-
+# =========================
+# Asset packing
+# =========================
 TCF_CMD := python $(SCRIPT_FOLDER)/tcf.py pack $(ASSET_FOLDER) data.tcf
 
-
-
 # =========================
-# Build rules
+# Rules
 # =========================
 all: $(EXE)
 
-$(EXE): $(SRC)
-	@echo "Packing assets"
+$(EXE): $(OBJ)
+	@echo "Packing assets..."
 	@$(TCF_CMD)
-	@echo "Compiling on: $(HOST_OS)"
-	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS) $(SUBSYSTEM_FLAG)
+	@echo "Linking executable on $(HOST_OS)..."
+	$(CXX) -o $@ $(OBJ) $(LDFLAGS) $(SUBSYSTEM_FLAG)
 
-# Run target
+# Compile C++ (with original flags)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
+	@mkdir -p $(dir $@)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+# Compile C (with original flags)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# =========================
+# Run
+# =========================
 run: $(EXE)
 ifeq ($(OS),Windows_NT)
-	@echo "Run the executable manually on Windows: $(EXE)"
+	@echo "Run manually: $(EXE)"
 else
 	./$(EXE)
 endif
 
-# Debug target
+# =========================
+# Debug
+# =========================
 debug: CXXFLAGS += -g
+debug: CFLAGS += -g
 debug: clean all
 
-# Clean target
+# =========================
+# Clean
+# =========================
 clean:
-	rm -f $(EXE)
+	rm -rf $(BUILD_DIR) $(EXE)
 
-# Force use of GCC
+# =========================
+# Compiler selection
+# =========================
 gcc:
-	$(MAKE) CXX=g++
+	$(MAKE) CC=gcc CXX=g++
 
-# Force use of Clang
 clang:
-	$(MAKE) CXX=clang++
+	$(MAKE) CC=clang CXX=clang++
 
 .PHONY: all run debug clean gcc clang
