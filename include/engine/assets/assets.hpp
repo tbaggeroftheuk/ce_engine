@@ -21,3 +21,37 @@ namespace CE::Assets::Textures {
     void UnloadAll();
     void Shutdown(); 
 }
+
+namespace CE::Assets::Audio {
+    void Init();
+
+    void LoadSFX(const std::string& name, const std::string& filename);
+    void LoadSFX_Wave(const std::string& name, const std::string& filename);
+    void LoadMusic(const std::string& name, const std::string& filename);
+    void LoadFolder(const std::string& folderPath);
+    void LoadFolderMusic(const std::string& folderPath);
+
+    void PlaySFX(const std::string& name);
+    void PlaySFXWave(const std::string& name);
+
+    void PlayMusic(const std::string& name);
+    void UpdateMusic();
+    void PauseMusic(const std::string& name);
+    void ResumeMusic(const std::string& name);
+    void StopMusic(const std::string& name);
+    void StopAllMusic();
+    void PauseAllMusic();
+    void ResumeAllMusic();
+    void PlayAllMusic();
+
+    void UnloadSFX_Wave(const std::string& name);
+    void UnloadSFX(const std::string& name);
+    void UnloadMusic(const std::string& name);
+    
+    void UnloadAllSFX_Wave();
+    void UnloadAllSFX();
+    void UnloadAllMusic();
+    void UnloadEverything();
+
+    void Shutdown();
+}

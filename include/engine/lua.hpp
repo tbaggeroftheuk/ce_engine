@@ -16,4 +16,5 @@ namespace CE::Lua::Functions {
 namespace CE::Lua {
     void init();
     void LoadStartup();
+    void LuaUpdate(); 
 }

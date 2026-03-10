@@ -13,6 +13,8 @@ extern "C" {
 #include "globals.hpp"
 #include "engine/lua.hpp"
 
+int g_luaUpdateRef = LUA_NOREF; // global reference to Update()
+
 // Helper function to remove stuff from a table
 void LuaMakeNil(lua_State* L, const char* tableName, const char* key) {
     lua_getglobal(L, tableName); // push table
@@ -62,7 +64,9 @@ namespace CE::Lua {
 
     void LoadStartup() {
         lua_State* L = CE::Scripting::lua;
-        int status = luaL_loadfile(L, "script.lua");
+        std::string startupPath = CE::Global.data_path + "/startup.lua";
+
+        int status = luaL_loadfile(L, startupPath.c_str());
 
         if (status != LUA_OK) {
             std::cerr << "Lua load error: " << lua_tostring(L, -1) << "\n";
@@ -72,8 +76,31 @@ namespace CE::Lua {
 
         status = lua_pcall(L, 0, LUA_MULTRET, 0);
 
+        // Try to get global Update function
+        lua_getglobal(L, "Update"); // pushes Update onto stack
+        if (lua_isfunction(L, -1)) {
+            g_luaUpdateRef = luaL_ref(L, LUA_REGISTRYINDEX); // stores ref, pops from stack
+        } else {
+            
+            lua_pop(L, 1); // pop nil
+        }
+
         if (status != LUA_OK) {
-            std::cerr << "Lua runtime error: " << lua_tostring(L, -1) << "\n";
+            std::cerr << "LUA_ERROR: Runtime error: " << lua_tostring(L, -1) << "\n";
+            lua_pop(L, 1);
+        }
+    }
+
+    void LuaUpdate() {
+        lua_State* L = CE::Scripting::lua;
+
+        if (g_luaUpdateRef == LUA_NOREF) return; // nothing to call
+
+        lua_rawgeti(L, LUA_REGISTRYINDEX, g_luaUpdateRef); // push the function
+
+        // call it with 0 args, 0 return values
+        if (lua_pcall(L, 0, 0, 0) != LUA_OK) {
+            std::cerr << "Lua Update error: " << lua_tostring(L, -1) << "\n";
             lua_pop(L, 1);
         }
     }

@@ -2,6 +2,7 @@
 #include "engine/engine.hpp"
 #include "engine/assets/assets.hpp"
 #include "engine/plugins/plugins.hpp"
+#include "engine/lua.hpp"
 #include "engine/ui.hpp" 
 #include "rlImGui.h" 
 
@@ -22,7 +23,8 @@ namespace CE::Engine {
             CE::Assets::Textures::Draw("NOEXISTINGS", 100, 100);
             CE::Assets::Textures::Draw("brick.png", 100, 200);
 
-
+        CE::Lua::LuaUpdate();
+        
         if (currentGameState == GameState::MainMenu) {
             CE::Plugins::UpdateMainMenuUI();
         } else if (currentGameState == GameState::InGame) {
