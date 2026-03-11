@@ -12,15 +12,16 @@ extern "C" {
 }
 
 namespace CE::Assets::Audio {
-    static std::unordered_map<std::string, Sound> SFXs;
-    static std::unordered_map<std::string, Wave> SFX_Wavs;
-    static std::unordered_map<std::string, Music> Musics;
-    static std::unordered_map<std::string, MusicLoopData> MusicLoops;
-
+    
     struct MusicLoopData {
         float loopStart;
         float loopEnd;
     };
+
+    static std::unordered_map<std::string, Sound> SFXs;
+    static std::unordered_map<std::string, Wave> SFX_Wavs;
+    static std::unordered_map<std::string, Music> Musics;
+    static std::unordered_map<std::string, MusicLoopData> MusicLoops;
 
     bool audioDeviceReady = false;
     

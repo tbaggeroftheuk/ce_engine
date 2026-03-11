@@ -7,6 +7,7 @@ ASSET_FOLDER  := assets
 SCRIPT_FOLDER := scripts
 SRC_DIR       := source
 INCLUDE_DIR   := include
+DATA_FILE_NAME := data.tcf
 MAKEFLAGS += -j4
 EXE := $(TARGET)
 
@@ -65,7 +66,8 @@ CXXFLAGS := -Wall -Wextra -std=c++20 \
 	-I$(INCLUDE_DIR)/third_party/lua \
     -I$(INCLUDE_DIR) \
     $(PLATFORM_FLAGS) \
-    -DENGINE_BUILT_ON_OS=$(HOST_OS_ESCAPED)
+    -DENGINE_BUILT_ON_OS=$(HOST_OS_ESCAPED) \
+	-DCE_DATA_FILE_NAME=\"$(DATA_FILE_NAME)\"
 
 # =========================
 # Linker flags

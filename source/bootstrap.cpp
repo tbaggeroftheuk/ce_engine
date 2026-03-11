@@ -1,8 +1,10 @@
 #include <cstdlib>
+#include <cstdint>
 #include <format>
 #include <string>
 #include <fstream>
 #include <filesystem>
+#include <iostream>
 
 #include "common/errorbox/error_box.hpp" // This is to show an infobox for a critiqual error
 #include "engine/engine.hpp" // Get access to CE::Engine::Main()
@@ -12,8 +14,9 @@
 #include "engine/lua.hpp" // To int and run lua
 #include "globals.hpp"
 
+#include "common/tcf/tcf.h"
+#include "common/ini.hpp"
 extern "C" {
-    #include "common/tcf/tcf.h"
     #include "raylib.h" 
     #include "third_party/minini/minIni.h"
     #include "third_party/minini/minGlue.h"
@@ -21,6 +24,50 @@ extern "C" {
 
 namespace CE {
     
+    void SetupGlobals() {
+
+        if (!FileExists(DATA_FILE_NAME.c_str())) {
+            TraceLog(LOG_FATAL, "CE-Bootstrap: Missing game data, please install it!");
+            ShowError("CE-Bootstrap: Missing game data, please install it!");
+        }
+
+        uint8_t* data = nullptr;
+        uint32_t size = 0;
+
+        
+        int res = tcf_load_file(DATA_FILE_NAME.c_str(), "Gameinfo.txt", &data, &size);
+        if (res != TCF_OK) {
+            TraceLog(LOG_ERROR, "CE-Bootstrap: Failed to load Gameinfo.txt from game data. Error code: %i", res);
+            ShowError("CE-Bootstrap: Failed to load Gameinfo.txt from game data");
+            return;
+        }
+        CE::Ini::IniFile ini;
+        CE::Ini::ParseError err;
+        CE::Ini::Options opts;
+        opts.allow_inline_comments = true;  
+        opts.allow_colon_delim = true;    
+        opts.allow_empty_values = true;   
+
+        bool ok = CE::Ini::parse_memory(data, size, ini, &err, opts);
+        if (!ok) {
+            std::cerr << "INI parse error at line " << err.line
+                    << ", column " << err.column
+                    << ": " << err.message << "\n";
+            tcf_free(data);
+            return;
+        }
+
+        CE::game_name = ini.get_string("Gameinfo", "Game_Name", "ERROR MISSING STRING");
+        CE::game_ver = ini.get_string("Gameinfo", "Game_Version", "ERROR MISSING STRING");
+        
+        TraceLog(LOG_INFO, "CE-Bootstrap: Game name and version: %s, %s", CE::game_name.c_str(), CE::game_ver.c_str());
+
+        CE::MaxFPS = ini.get_int("Graphics", "Max_FPS", 60);
+        CE::Global.window_width = ini.get_int("Graphics", "Window_Width", 1280);
+        CE::Global.window_height = ini.get_int("Graphics", "Window_Height", 720);
+        return;
+    }
+
 void SetupPaths() {
     namespace fs = std::filesystem;
 
@@ -102,8 +149,6 @@ void SetupPaths() {
     fs::create_directories(CE::Global.save_path);
 }
 
-
-
     void ExtractGame(void) {
         if (!DirectoryExists(CE::Global.data_path.c_str())) { // Check data path exists
             if (MakeDirectory(CE::Global.data_path.c_str()) != 0) { // Try to make the directory, shows an error if it failed
@@ -116,7 +161,7 @@ void SetupPaths() {
         TraceLog(LOG_INFO, "CE-Bootstrap: Data directory is %s", CE::Global.data_path.c_str());
 
 
-        if (!FileExists("data.tcf")) {
+        if (!FileExists(DATA_FILE_NAME.c_str())) {
             TraceLog(LOG_FATAL, "CE-Bootstrap: Missing game data, please install it!");
             ShowError("CE-Bootstrap: Missing game data, please install it!");
         }
@@ -140,14 +185,14 @@ void SetupPaths() {
 
         }
 
-        if (VerFileContents != CE::engine_ver) ExtractRequired = true;
+        if (VerFileContents != CE::game_ver) ExtractRequired = true;
 
         if (CE::Debug) ExtractRequired = true;
 
         TraceLog(LOG_INFO, "CE-Bootstrap: Version from data: %s", VerFileContents.c_str());
 
         if (ExtractRequired) {
-            int Tcf = tcf_extract("data.tcf", CE::Global.data_path.c_str());
+            int Tcf = tcf_extract(DATA_FILE_NAME.c_str(), CE::Global.data_path.c_str());
             
         switch (Tcf) {
             case TCF_ERR_IO:
@@ -183,7 +228,7 @@ void SetupPaths() {
         }
             std::ofstream VerFileOut(VerFilePath);
             if(VerFileOut.is_open()) {
-                VerFileOut << CE::engine_ver;
+                VerFileOut << CE::game_ver;
             }
         }
         TraceLog(LOG_INFO, "CE-Bootstrap: Game data has been extracted!");
@@ -216,6 +261,7 @@ void SetupPaths() {
     }
 
     void Bootstrap(void) {
+        SetupGlobals();
         SetupPaths();
         ExtractGame();
         WindowInit();
