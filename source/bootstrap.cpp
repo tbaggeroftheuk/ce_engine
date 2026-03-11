@@ -220,7 +220,7 @@ void SetupPaths() {
         ExtractGame();
         WindowInit();
         CE::Assets::Textures::Init();
-        CE::Plugins::Init();
+        CE::Assets::Audio::Init();
         CE::Plugins::LoadModules();
         CE::Lua::init();
         CE::Lua::LoadStartup();

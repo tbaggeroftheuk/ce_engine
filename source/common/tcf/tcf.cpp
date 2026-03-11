@@ -4,6 +4,7 @@
 
 #include "common/tcf/tcf.h"
 
+#include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <cstdio>
@@ -30,8 +31,7 @@
 #define PATH_SEP '/'
 #endif
 
-static uint32_t crc32(const uint8_t *data, size_t len)
-{
+static uint32_t crc32(const uint8_t *data, size_t len) {
     uint32_t crc = 0xFFFFFFFF;
 
     for (size_t i = 0; i < len; i++) {
@@ -103,6 +103,36 @@ static uint32_t read_u32(std::ifstream& f)
     );
 }
 
+static std::string normalize_inner_path(const char *inner_path)
+{
+    if (!inner_path)
+        return {};
+
+    std::string s(inner_path);
+    for (char &ch : s) {
+        if (ch == '\\')
+            ch = '/';
+    }
+
+    while (!s.empty() && s.front() == '/')
+        s.erase(s.begin());
+
+    return s;
+}
+
+static bool is_safe_inner_path(const std::string& p)
+{
+    if (p.empty())
+        return false;
+    if (p.find("..") != std::string::npos)
+        return false;
+    if (!p.empty() && (p[0] == '/' || p[0] == '\\'))
+        return false;
+    if (p.find(':') != std::string::npos)
+        return false;
+    return true;
+}
+
 static void walk_dir(const std::filesystem::path& base, const std::filesystem::path& rel = "")
 {
     std::filesystem::path current = base / rel;
@@ -139,11 +169,17 @@ int tcf_pack(const char *input_dir, const char *out_path)
         if (!in) return TCF_ERR_IO;
 
         size_t r;
-        while ((r = in.readsome(reinterpret_cast<char*>(buffer.data()), BUFFER_SIZE)) > 0) {
-            for (size_t j = 0; j < r; j++)
-                buffer[j] = shift_table[buffer[j]];
+        while (in) {
+            in.read(reinterpret_cast<char*>(buffer.data()), BUFFER_SIZE);
+            r = static_cast<size_t>(in.gcount());
+            if (r == 0)
+                break;
 
-            out.write(reinterpret_cast<char*>(buffer.data()), r);
+            for (size_t j = 0; j < r; j++) {
+                buffer[j] = shift_table[buffer[j]];
+            }
+
+            out.write(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(r));
         }
 
         offset += entry.size;
@@ -179,6 +215,150 @@ int tcf_pack(const char *input_dir, const char *out_path)
     out.write(reinterpret_cast<char*>(header), sizeof(header));
 
     return TCF_OK;
+}
+
+int tcf_load_file(const char *tcf_path,
+                  const char *inner_path,
+                  uint8_t **out_data,
+                  uint32_t *out_size)
+{
+    if (!tcf_path || !inner_path || !out_data || !out_size)
+        return TCF_ERR_ARG;
+
+    *out_data = nullptr;
+    *out_size = 0;
+
+    init_tables();
+
+    std::ifstream f(tcf_path, std::ios::binary);
+    if (!f)
+        return TCF_ERR_IO;
+
+    uint8_t header[18];
+    f.read(reinterpret_cast<char*>(header), sizeof(header));
+    if (!f || f.gcount() != sizeof(header))
+        return TCF_ERR_FORMAT;
+
+    if (std::memcmp(header, TCF_MAGIC, 3) != 0)
+        return TCF_ERR_FORMAT;
+
+    uint32_t index_offset =
+        header[6]  |
+        header[7]  << 8 |
+        header[8]  << 16 |
+        header[9]  << 24;
+
+    uint32_t file_count =
+        header[10] |
+        header[11] << 8 |
+        header[12] << 16 |
+        header[13] << 24;
+
+    uint32_t expected_crc =
+        header[14] |
+        header[15] << 8 |
+        header[16] << 16 |
+        header[17] << 24;
+
+    if (crc32(header, 14) != expected_crc)
+        return TCF_ERR_CRC;
+
+    if (index_offset < sizeof(header))
+        return TCF_ERR_FORMAT;
+
+    std::string wanted = normalize_inner_path(inner_path);
+    if (!is_safe_inner_path(wanted))
+        return TCF_ERR_ARG;
+
+    f.seekg(static_cast<std::streamoff>(index_offset), std::ios::beg);
+    if (!f)
+        return TCF_ERR_IO;
+
+    bool found = false;
+    uint32_t found_offset = 0;
+    uint32_t found_size = 0;
+
+    for (uint32_t i = 0; i < file_count; i++) {
+        uint16_t path_len = read_u16(f);
+        if (!f) return TCF_ERR_IO;
+
+        std::string path(path_len, '\0');
+        if (path_len > 0) {
+            f.read(&path[0], path_len);
+            if (!f) return TCF_ERR_IO;
+        }
+
+        if (path.find("..") != std::string::npos) {
+            (void)read_u32(f);
+            (void)read_u32(f);
+            if (!f) return TCF_ERR_IO;
+            continue;
+        }
+
+        uint32_t offset = read_u32(f);
+        if (!f) return TCF_ERR_IO;
+        uint32_t size = read_u32(f);
+        if (!f) return TCF_ERR_IO;
+
+        if (path == wanted) {
+            found = true;
+            found_offset = offset;
+            found_size = size;
+            break;
+        }
+    }
+
+    if (!found)
+        return TCF_ERR_NOT_FOUND;
+
+    uint32_t payload_size = index_offset - static_cast<uint32_t>(sizeof(header));
+    if (found_offset > payload_size || found_size > payload_size || found_offset + found_size > payload_size)
+        return TCF_ERR_FORMAT;
+
+    if (found_size == 0) {
+        *out_data = nullptr;
+        *out_size = 0;
+        return TCF_OK;
+    }
+
+    uint8_t *data = static_cast<uint8_t*>(std::malloc(found_size));
+    if (!data)
+        return TCF_ERR_MEMORY;
+
+    f.seekg(static_cast<std::streamoff>(sizeof(header) + found_offset), std::ios::beg);
+    if (!f) {
+        std::free(data);
+        return TCF_ERR_IO;
+    }
+
+    std::vector<uint8_t> buffer(BUFFER_SIZE);
+    uint32_t remaining = found_size;
+    uint32_t written = 0;
+
+    while (remaining > 0) {
+        uint32_t chunk = std::min(remaining, static_cast<uint32_t>(BUFFER_SIZE));
+        f.read(reinterpret_cast<char*>(buffer.data()), static_cast<std::streamsize>(chunk));
+        if (!f || f.gcount() != static_cast<std::streamsize>(chunk)) {
+            std::free(data);
+            return TCF_ERR_IO;
+        }
+
+        for (uint32_t j = 0; j < chunk; j++) {
+            data[written + j] = unshift_table[buffer[j]];
+        }
+
+        written += chunk;
+        remaining -= chunk;
+    }
+
+    *out_data = data;
+    *out_size = found_size;
+    return TCF_OK;
+}
+
+void tcf_free(void *ptr)
+{
+    std::free(ptr);
 }
 
 int tcf_extract(const char *tcf_path, const char *output_dir)

@@ -11,7 +11,8 @@ namespace CE::Assets::Textures {
     void Load(const std::string& name, const std::string& filename);
     void LoadFolder(const std::string& folderPath);
     Texture2D& Get(const std::string& name);
-    void Draw(const std::string& path, const int posX, const int posY, const Color tint = WHITE);
+    void Draw(const std::string& name, const int posX, const int posY, const Color tint = WHITE);
+    bool Exists(const std::string& name);
 
     int LoadedTextures();
     int LoadedTexturesNoError();
@@ -43,6 +44,7 @@ namespace CE::Assets::Audio {
     void PauseAllMusic();
     void ResumeAllMusic();
     void PlayAllMusic();
+    void SetMusicLoop(const std::string& name, const float start, const float end);
 
     void UnloadSFX_Wave(const std::string& name);
     void UnloadSFX(const std::string& name);

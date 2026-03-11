@@ -15,6 +15,12 @@ namespace CE::Assets::Audio {
     static std::unordered_map<std::string, Sound> SFXs;
     static std::unordered_map<std::string, Wave> SFX_Wavs;
     static std::unordered_map<std::string, Music> Musics;
+    static std::unordered_map<std::string, MusicLoopData> MusicLoops;
+
+    struct MusicLoopData {
+        float loopStart;
+        float loopEnd;
+    };
 
     bool audioDeviceReady = false;
     
@@ -193,6 +199,7 @@ namespace CE::Assets::Audio {
         if (WaveSound != SFX_Wavs.end()) {
             Sound s = LoadSoundFromWave(WaveSound->second);
             PlaySound(s);
+            UnloadSound(s);
             return;
         }
         TraceLog(LOG_WARNING, "CE-Audio: Tried to play unloaded or missing wave: %s", name.c_str());
@@ -210,7 +217,17 @@ namespace CE::Assets::Audio {
 
     void UpdateMusic() {
         for (auto& [name, music] : Musics) {
+
             UpdateMusicStream(music);
+
+            auto it = MusicLoops.find(name);
+            if (it != MusicLoops.end()) {
+                float time = GetMusicTimePlayed(music);
+
+                if (time >= it->second.loopEnd) {
+                    SeekMusicStream(music, it->second.loopStart);
+                }
+            }
         }
     }
 
@@ -268,6 +285,17 @@ namespace CE::Assets::Audio {
         for (auto& [name, Music] : Musics) {
            ResumeMusicStream(Music);
         }
+    }
+
+    void SetMusicLoop(const std::string& name, const float start, const float end) {
+        auto Moosics = Musics.find(name);
+
+        if (Moosics == Musics.end()) {
+            TraceLog(LOG_WARNING, "CE-Audio: tried to register a music loop for an unloaded or missing assets: %s", name.c_str());
+            return;
+        }
+        MusicLoops[name] = {start, end};
+        return;
     }
 
     void UnloadSFX_Wave(const std::string& name) {

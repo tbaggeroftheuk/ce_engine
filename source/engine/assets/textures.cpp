@@ -14,7 +14,6 @@ extern "C" {
 namespace CE::Assets::Textures {
     static std::unordered_map<std::string, Texture2D> Textures;
     static Texture2D ErrorTexture = {0, 0, 0, 0, 0};
-    
     void Init() { // Must be ran before anything else 
         Image Img = GenImageChecked(64, 64, 8, 8, MAGENTA, BLACK);
         ErrorTexture = LoadTextureFromImage(Img);
@@ -40,10 +39,11 @@ namespace CE::Assets::Textures {
         }
 
         // Always insert into the map, even if it's the error texture
-        Textures.emplace(name, Tex);
+        Textures[name] = Tex;
     }
 
     void LoadFolder(const std::string& folderPath) {
+        Textures.reserve(256);
         std::string FullPath = std::format("{}/{}", CE::Global.data_path, folderPath);
 
         if (!std::filesystem::exists(FullPath)) {
@@ -94,13 +94,18 @@ namespace CE::Assets::Textures {
     }
 
 
-    void Draw(const std::string& path, int posX, int posY, Color tint){
-        auto It = Textures.find(path);
+    void Draw(const std::string& name, int posX, int posY, Color tint){
+        auto It = Textures.find(name);
         if (It == Textures.end()) {
-            Load(path, path);
+            DrawTexture(ErrorTexture, posX, posY, tint);
+            return;
         }
-        DrawTexture(Get(path), posX, posY, tint);
+        DrawTexture(Get(name), posX, posY, tint);
     }
+
+    bool Exists(const std::string& name) {
+        return Textures.find(name) != Textures.end();
+    }   
 
     int LoadedTextures() {
         return Textures.size();
@@ -122,12 +127,13 @@ namespace CE::Assets::Textures {
         return count; 
     }
 
-
     void Unload(const std::string& name) {
         auto Lst = Textures.find(name);
 
         if (Lst != Textures.end()){
-            UnloadTexture(Lst->second);
+            if (Lst->second.id != ErrorTexture.id) {
+                UnloadTexture(Lst->second);
+            }
             Textures.erase(Lst);
             TraceLog(LOG_INFO, "CE-Textures: Unloaded texture '%s' ", name.c_str());
             return;
@@ -139,7 +145,9 @@ namespace CE::Assets::Textures {
 
     void UnloadAll(){
         for (auto& [name, texture] : Textures) {
-           UnloadTexture(texture);
+           if (texture.id != ErrorTexture.id) {
+                UnloadTexture(texture);
+            }
         }
         Textures.clear();
     }
@@ -147,7 +155,9 @@ namespace CE::Assets::Textures {
 
     void Shutdown() {
         for (auto& [name, texture] : Textures) {
-           UnloadTexture(texture);
+           if (texture.id != ErrorTexture.id) {
+                UnloadTexture(texture);
+            }
         }
         Textures.clear();
         UnloadTexture(ErrorTexture);
