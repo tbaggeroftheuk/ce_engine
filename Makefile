@@ -145,4 +145,9 @@ gcc:
 clang:
 	$(MAKE) CC=clang CXX=clang++
 
-.PHONY: all run debug clean gcc clang
+assets:
+	rm $(DATA_FILE_NAME)
+	@echo "Packing assets only..."
+	@$(TCF_CMD)
+
+.PHONY: all run debug clean gcc clang assets

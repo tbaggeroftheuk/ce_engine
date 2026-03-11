@@ -139,6 +139,20 @@ int TexturesDraw(lua_State* L) {
     return 0;
 }
 
+int AudioMusicLoad(lua_State* L) {
+    const char* Path = LCS(L, 1);
+    const char* Name = LCS(L, 2);
+
+    CE::Assets::Audio::LoadMusic(Name, Path);
+    return 0;
+}
+
+int AudioMusicPlay(lua_State* L) {
+    const char* Name = LCS(L, 1);
+    CE::Assets::Audio::PlayMusic(Name);
+    return 0;
+}
+
 namespace CE::Lua::Functions {
 
     void ExposeFunctions() {
@@ -179,6 +193,16 @@ namespace CE::Lua::Functions {
         lua_setfield(L, -2, "LoadFolder");
 
         lua_setglobal(L, "Textures"); // pops the table
+
+        lua_newtable(L); // stack: [AudioTable]
+
+        lua_pushcfunction(L, AudioMusicLoad);
+        lua_setfield(L, -2, "MusicLoad");
+
+        lua_pushcfunction(L, AudioMusicPlay);
+        lua_setfield(L, -2, "MusicPlay");
+
+        lua_setglobal(L, "Audio"); // pops the table
 
     }
 

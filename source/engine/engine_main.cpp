@@ -24,7 +24,7 @@ namespace CE::Engine {
             CE::Assets::Textures::Draw("brick.png", 100, 200);
 
         CE::Lua::LuaUpdate();
-        
+        CE::Assets::Audio::UpdateMusic();
         if (currentGameState == GameState::MainMenu) {
             CE::Plugins::UpdateMainMenuUI();
         } else if (currentGameState == GameState::InGame) {
