@@ -13,7 +13,7 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
-    # Install general build dependencies
+    # Install general dependencies
     - name: Install build dependencies
       run: |
         sudo apt-get update
@@ -21,13 +21,12 @@ jobs:
           build-essential clang cmake pkg-config python3 python3-pip \
           libgl1-mesa-dev libx11-dev libxi-dev git
 
-    # Build and install raylib from source
-    - name: Build and install raylib
+    # Build and install Raylib from source
+    - name: Build and install Raylib
       run: |
         git clone https://github.com/raysan5/raylib.git
         cd raylib
-        mkdir build
-        cd build
+        mkdir build && cd build
         cmake -DBUILD_SHARED_LIBS=ON ..
         make -j4
         sudo make install
