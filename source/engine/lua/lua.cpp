@@ -60,6 +60,9 @@ namespace CE::Lua {
         lua_newtable(L);
 
         CE::Lua::Functions::ExposeFunctions();
+        CE::Lua::Functions::ce_functions::Register(L);
+        CE::Lua::Functions::RaylibBindings::Register(L);
+        CE::Lua::Functions::Assets::Register(L);
     }
 
     void LoadStartup() {

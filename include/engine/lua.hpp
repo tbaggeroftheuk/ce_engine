@@ -13,8 +13,21 @@ namespace CE::Lua::Functions {
     void ExposeFunctions();
 }
 
+namespace CE::Lua::Functions::RaylibBindings {
+    void Register(lua_State* L);
+}
+
 namespace CE::Lua {
     void init();
     void LoadStartup();
     void LuaUpdate(); 
 }
+
+namespace CE::Lua::Functions::ce_functions {
+    void Register(lua_State* L);
+}
+
+namespace CE::Lua::Functions::Assets {
+    void Register(lua_State* L);
+}
+
