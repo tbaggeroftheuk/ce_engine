@@ -17,7 +17,7 @@
 #include "common/tcf/tcf.h"
 #include "common/ini.hpp"
 extern "C" {
-    #include "raylib.h" 
+    #include <raylib.h> 
     #include "third_party/minini/minIni.h"
     #include "third_party/minini/minGlue.h"
 }

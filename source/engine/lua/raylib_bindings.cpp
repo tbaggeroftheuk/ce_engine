@@ -1,8 +1,10 @@
 
 extern "C" {
-    #include "raylib.h"
+    #include <raylib.h>
 }
 
 #include "engine/lua.hpp"
 
-namespace CE::Lua
+namespace CE::Lua::Functions {
+
+}

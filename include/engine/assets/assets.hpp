@@ -2,7 +2,7 @@
 #include <string>
 
 extern "C" { 
-    #include "raylib.h" 
+    #include <raylib.h> 
 }
 
 namespace CE::Assets::Textures {

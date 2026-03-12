@@ -58,7 +58,7 @@ OBJ := $(CPP_OBJ) $(C_OBJ)
 # =========================
 # Original C / C++ flags (preserved)
 # =========================
-CFLAGS := -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/third_party -I$(INCLUDE_DIR)/third_party/lua \
+CFLAGS := -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/third_party -I$(INCLUDE_DIR)/third_party/lua
 
 CXXFLAGS := -Wall -Wextra -std=c++20 \
     -I$(INCLUDE_DIR)/third_party \
@@ -73,9 +73,9 @@ CXXFLAGS := -Wall -Wextra -std=c++20 \
 # Linker flags
 # =========================
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -Iinclude/third_party/imgui -Iinclude/third_party/lua
+	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -Iinclude/third_party/imgui -Iinclude/third_party/lua 
 else
-	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi -Iinclude/third_party/imgui -Iinclude/third_party/lua
+	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi -Iinclude/third_party/imgui -Iinclude/third_party/lua 
 endif
 
 # Windows GUI subsystem
@@ -136,9 +136,18 @@ debug: clean all
 clean:
 	rm -rf $(BUILD_DIR) $(EXE)
 
+
 # =========================
-# Compiler selection
+# Graphics Backend (Linux)
 # =========================
+GRAPHICS_BACKEND ?= X11  # default
+
+ifeq ($(GRAPHICS_BACKEND),X11)
+	CXXFLAGS += -DGRAPHICS_BACKEND_X11
+endif
+ifeq ($(GRAPHICS_BACKEND),WAYLAND)
+	CXXFLAGS += -DGRAPHICS_BACKEND_WAYLAND
+endif
 gcc:
 	$(MAKE) CC=gcc CXX=g++
 

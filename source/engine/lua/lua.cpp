@@ -3,7 +3,7 @@
 #include <iostream>
 
 extern "C" {
-    #include "raylib.h"
+    #include <raylib.h>
     #include "lua.h"
     #include "lauxlib.h" 
     #include "lualib.h" 

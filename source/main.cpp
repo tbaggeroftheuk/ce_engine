@@ -8,7 +8,7 @@
 #include "bootstrap.hpp"
 
 extern "C" {
-    #include "raylib.h"
+    #include <raylib.h>
 }
 
 
