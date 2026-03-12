@@ -159,4 +159,9 @@ assets:
 	@echo "Packing assets only..."
 	@$(TCF_CMD)
 
-.PHONY: all run debug clean gcc clang assets
+# Build executable only (skip asset packing)
+exe_only: $(OBJ)
+	@echo "Linking executable on $(HOST_OS)..."
+	$(CXX) -o $(EXE) $(OBJ) $(LDFLAGS) $(SUBSYSTEM_FLAG)
+
+.PHONY: all run debug clean gcc clang assets exe_only

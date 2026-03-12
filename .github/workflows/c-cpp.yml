@@ -23,7 +23,7 @@ jobs:
 
     # Build project and pack assets
     - name: Build and pack assets
-      run: make clang assets
+      run: make clang exe_only
 
     # Upload executable and assets
     - name: Upload release artifacts
