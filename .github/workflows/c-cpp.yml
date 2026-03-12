@@ -33,13 +33,8 @@ jobs:
         sudo ldconfig
 
     # Build project and pack assets
-<<<<<<< HEAD
     - name: Build and pack assets
       run: make clang exe_only
-=======
-    - name: Build project and pack assets
-      run: make clang assets
->>>>>>> 0ef1bf57b6c4859b801855ee463ab8a5456f2392
 
     # Upload executable and assets
     - name: Upload release artifacts
