@@ -38,7 +38,7 @@ jobs:
 
     # Upload executable and assets
     - name: Upload release artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: ce_engine-release
         path: |
