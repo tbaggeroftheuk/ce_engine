@@ -21,11 +21,15 @@ jobs:
           build-essential clang cmake pkg-config python3 python3-pip \
           libgl1-mesa-dev libx11-dev libxi-dev libraylib-dev
 
-    - name: Configure and build
-      run: make clang
+    # Build project and pack assets
+    - name: Build and pack assets
+      run: make clang assets
 
-    - name: Run tests (if any)
-      run: make check || true
-
-    - name: Run executable
-      run: ./ce_engine || true
+    # Upload executable and assets
+    - name: Upload release artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: ce_engine-release
+        path: |
+          ./ce_engine
+          ./data.tcf
