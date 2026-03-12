@@ -48,8 +48,8 @@ jobs:
         draft: false
         prerelease: false
 
-    # Upload executable and assets to the release
-    - name: Upload Release Assets
+    # Upload executable to the release
+    - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -57,14 +57,4 @@ jobs:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./ce_engine
         asset_name: ce_engine
-        asset_content_type: application/octet-stream
-
-    - name: Upload data file
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./data.tcf
-        asset_name: data.tcf
         asset_content_type: application/octet-stream
