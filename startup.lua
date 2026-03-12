@@ -4,10 +4,10 @@ Log.Warn("This is a warning message")
 Log.Error("This is an error message")
 
 Log.Info("Trying to load music")
-Audio.MusicLoad("music.mp3", "TestMusic")
+Audio.Music.Load("music.mp3", "TestMusic")
 Log.Info("Loaded music!")
 Log.Info("Trying to play music")
-Audio.MusicPlay("TestMusic")
+Audio.Music.Play("TestMusic")
 Log.Info("MUSIC WAS PLAYED!")
 
 function Update()

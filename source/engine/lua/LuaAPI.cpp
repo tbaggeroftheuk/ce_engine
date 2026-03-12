@@ -153,6 +153,29 @@ int AudioMusicPlay(lua_State* L) {
     return 0;
 }
 
+int AudioMusicPause(lua_State* L) {
+    const char* Name = LCS(L, 1);
+    CE::Assets::Audio::PauseMusic(Name);
+    return 0;
+}
+
+int AudioMusicResume(lua_State* L) {
+    const char* Name = LCS(L, 1);
+    CE::Assets::Audio::ResumeMusic(Name);
+    return 0;
+}
+
+int AudioMusicUnload(lua_State* L) {
+    const char* Name = LCS(L, 1);
+    CE::Assets::Audio::UnloadMusic(Name);
+    return 0;
+}
+
+int AudioMusicUnloadAll(lua_State* L) {
+    CE::Assets::Audio::UnloadAllMusic();
+    return 0;
+}
+
 namespace CE::Lua::Functions {
 
     void ExposeFunctions() {
@@ -196,11 +219,27 @@ namespace CE::Lua::Functions {
 
         lua_newtable(L); // stack: [AudioTable]
 
+        lua_newtable(L); // This for Music so we can have Audio.Music
+
         lua_pushcfunction(L, AudioMusicLoad);
-        lua_setfield(L, -2, "MusicLoad");
+        lua_setfield(L, -1, "Load");
+
+        lua_pushcfunction(L, AudioMusicUnload);
+        lua_setfield(L, -1, "Unload");
 
         lua_pushcfunction(L, AudioMusicPlay);
-        lua_setfield(L, -2, "MusicPlay");
+        lua_setfield(L, -1, "Play");
+
+        lua_pushcfunction(L, AudioMusicPause);
+        lua_setfield(L, -1, "Pause");
+
+        lua_pushcfunction(L, AudioMusicResume);
+        lua_setfield(L, -1, "Resume");
+
+        lua_pushcfunction(L, AudioMusicUnloadAll);
+        lua_setfield(L, -1, "UnloadAll");
+
+        lua_setfield(L, -1, "Music");
 
         lua_setglobal(L, "Audio"); // pops the table
 
