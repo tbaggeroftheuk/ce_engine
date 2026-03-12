@@ -29,6 +29,7 @@ namespace CE {
         if (!FileExists(DATA_FILE_NAME.c_str())) {
             TraceLog(LOG_FATAL, "CE-Bootstrap: Missing game data, please install it!");
             ShowError("CE-Bootstrap: Missing game data, please install it!");
+            std::exit(1);
         }
 
         uint8_t* data = nullptr;
