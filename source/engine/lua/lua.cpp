@@ -63,6 +63,7 @@ namespace CE::Lua {
         CE::Lua::Functions::ce_functions::Register(L);
         CE::Lua::Functions::RaylibBindings::Register(L);
         CE::Lua::Functions::Assets::Register(L);
+        CE::Lua::Functions::Assets::Fonts::Register(L);
     }
 
     void LoadStartup() {
@@ -106,5 +107,9 @@ namespace CE::Lua {
             std::cerr << "Lua Update error: " << lua_tostring(L, -1) << "\n";
             lua_pop(L, 1);
         }
+    }
+
+    void Shutdown() {
+        lua_close(CE::Scripting::lua);
     }
 }

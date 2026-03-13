@@ -85,5 +85,7 @@ int main(int argc, char *argv[]) {
 
     CE::Bootstrap(); // Actually setting up the files, window and other stuff
 
+    CE::Shutdown(); // Unload EVERYTHING
+
     return 0;
 }

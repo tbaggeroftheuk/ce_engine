@@ -42,10 +42,13 @@ namespace CE::Engine {
             rlImGuiEnd(); 
 
             EndDrawing();
+
+            if(CE::should_exit) {
+                break;
+            }
         }
-        CE::Assets::Textures::Shutdown();
         CloseWindow();
         TraceLog(LOG_INFO, "CE-Main: Exited main loop");
-        return CE::should_exit;
+        return 0;
     };
 }

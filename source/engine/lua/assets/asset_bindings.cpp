@@ -1,5 +1,4 @@
 #include "engine/lua.hpp"
-#include "engine/lua.hpp"
 #include "engine/assets/assets.hpp"
 extern "C" {
     #include <raylib.h>

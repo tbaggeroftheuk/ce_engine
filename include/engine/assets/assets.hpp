@@ -62,7 +62,8 @@ namespace CE::Assets::Fonts {
     void Load(const std::string& name, const std::string& path);
     void LoadEx(const std::string& name,const int size, const std::string& path);
 
-    void Draw(const std::string& name, const std::string& text, int fontsize, int PosX, int PosY, const Color color);
+    void Draw(const std::string& text, int fontsize, int PosX, int PosY, const Color color);
+    void DrawEx(const std::string& name, const std::string& text, int fontsize, int PosX, int PosY, const Color color);
 
     void Unload(const std::string& name);
     void UnloadAll();

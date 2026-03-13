@@ -29,6 +29,11 @@ int IsDebugOn(lua_State* L) {
     return 1;
 }
 
+int Shutdown_CE(lua_State* L) {
+    CE::should_exit = true;
+    return 0;
+}
+
 namespace CE::Lua::Functions::ce_functions {
     void Register(lua_State* L) {
         lua_newtable(L);
@@ -41,6 +46,9 @@ namespace CE::Lua::Functions::ce_functions {
 
         lua_pushcfunction(L, IsDebugOn);
         lua_setfield(L, -2, "IsDebugOn");
+
+        lua_pushcfunction(L, Shutdown_CE);
+        lua_setfield(L, -2, "Shutdown");
 
         lua_setglobal(L, "CE");
     }

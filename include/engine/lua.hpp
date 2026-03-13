@@ -21,6 +21,7 @@ namespace CE::Lua {
     void init();
     void LoadStartup();
     void LuaUpdate(); 
+    void Shutdown();
 }
 
 namespace CE::Lua::Functions::ce_functions {
@@ -31,3 +32,7 @@ namespace CE::Lua::Functions::Assets {
     void Register(lua_State* L);
 }
 
+
+namespace CE::Lua::Functions::Assets::Fonts {
+    void Register(lua_State* L);
+}
