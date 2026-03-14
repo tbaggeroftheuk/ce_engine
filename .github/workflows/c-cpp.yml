@@ -11,60 +11,33 @@ permissions:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [ubuntu-latest, windows-latest]
+    runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v4
 
-    - name: Install dependencies on Linux
-      if: matrix.os == 'ubuntu-latest'
+    - name: Install build dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y \
           build-essential clang cmake pkg-config python3 python3-pip git \
           libgl1-mesa-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev libxinerama-dev libxext-dev
-        # Build and install Raylib
+
+    - name: Build and install Raylib
+      run: |
         git clone https://github.com/raysan5/raylib.git
         cd raylib
         mkdir build && cd build
         cmake -DBUILD_SHARED_LIBS=ON ..
-        make -j$(nproc)
+        make -j4
         sudo make install
         sudo ldconfig
 
-    - name: Install MSYS2 and dependencies on Windows
-      if: matrix.os == 'windows-latest'
-      uses: msys2/setup-msys2@v2
-      with:
-        update: true
-        install: >-
-          mingw-w64-x86_64-toolchain
-          mingw-w64-x86_64-cmake
-          mingw-w64-x86_64-raylib
-          mingw-w64-x86_64-pkg-config
-          mingw-w64-x86_64-python3
-          mingw-w64-x86_64-git
-        path-type: inherit
-
-    - name: Build project on Linux
-      if: matrix.os == 'ubuntu-latest'
+    - name: Build and pack assets
       run: make exe_only
 
-    - name: Build project on Windows
-      if: matrix.os == 'windows-latest'
-      shell: msys2 {0}
-      run: |
-        mkdir build
-        cd build
-        cmake -G "MinGW Makefiles" ..
-        mingw32-make.exe -j4
-
-    # Only create GitHub release once (Linux job)
+    # Create a GitHub release (tags automatically)
     - name: Create Release
-      if: matrix.os == 'ubuntu-latest'
       id: create_release
       uses: actions/create-release@v1
       env:
@@ -75,26 +48,13 @@ jobs:
         draft: false
         prerelease: false
 
-    # Upload executable to the release (Linux)
-    - name: Upload Linux executable
-      if: matrix.os == 'ubuntu-latest'
+    # Upload executable to the release
+    - name: Upload Release Asset
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./ce_engine
-        asset_name: ce_engine_linux
-        asset_content_type: application/octet-stream
-
-    # Upload executable to the release (Windows)
-    - name: Upload Windows executable
-      if: matrix.os == 'windows-latest'
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./build/ce_engine.exe
-        asset_name: ce_engine_windows.exe
+        asset_name: ce_engine
         asset_content_type: application/octet-stream
