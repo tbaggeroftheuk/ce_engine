@@ -43,35 +43,37 @@ namespace MemoryUsage {
     }
 
     inline size_t getHeapUsage() {
-    #if defined(_WIN32)
-        PROCESS_MEMORY_COUNTERS_EX pmc;
-        if (GetProcessMemoryInfo(GetCurrentProcess(),
-                                reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&pmc),
-                                sizeof(pmc))) {
-            return pmc.PrivateUsage;
-        }
-    #elif defined(__linux__)
-        std::ifstream file("/proc/self/status");
-        std::string line;
-        while (std::getline(file, line)) {
-            if (line.find("VmData:") == 0) { 
-                size_t kb;
-                sscanf(line.c_str(), "VmData: %zu kB", &kb);
-                return kb * 1024;
-            }
-        }
-        return 0;
-    #elif defined(__APPLE__)
-        mach_task_basic_info info;
-        mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
-        if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
-                      (task_info_t)&info, &count) == KERN_SUCCESS) {
-            return info.resident_size;
-        }
-        return 0;
-    #endif
+#if defined(_WIN32)
+    PROCESS_MEMORY_COUNTERS_EX pmc;
+    if (GetProcessMemoryInfo(GetCurrentProcess(),
+                             reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&pmc),
+                             sizeof(pmc))) {
+        return pmc.PrivateUsage;
     }
+#elif defined(__linux__)
+    std::ifstream file("/proc/self/status");
+    std::string line;
+    while (std::getline(file, line)) {
+        if (line.find("VmData:") == 0) { 
+            size_t kb;
+            sscanf(line.c_str(), "VmData: %zu kB", &kb);
+            return kb * 1024;
+        }
+    }
+    return 0;
+#elif defined(__APPLE__)
+    mach_task_basic_info info;
+    mach_msg_type_number_t count = MACH_TASK_BASIC_INFO_COUNT;
+    if (task_info(mach_task_self(), MACH_TASK_BASIC_INFO,
+                  (task_info_t)&info, &count) == KERN_SUCCESS) {
+        return info.resident_size;
+    }
+    return 0;
+#endif
 
+    // Default return if none of the above platforms match
+    return 0;
+}
     inline size_t getResidentMemory() {
     #if defined(_WIN32)
         PROCESS_MEMORY_COUNTERS pmc;
