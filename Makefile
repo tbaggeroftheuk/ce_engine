@@ -164,4 +164,12 @@ exe_only: $(OBJ)
 	@echo "Linking executable on $(HOST_OS)..."
 	$(CXX) -o $(EXE) $(OBJ) $(LDFLAGS) $(SUBSYSTEM_FLAG)
 
-.PHONY: all run debug clean gcc clang assets exe_only
+
+windows: CC=x86_64-w64-mingw32-gcc
+windows: CXX=x86_64-w64-mingw32-g++
+windows: EXE=$(TARGET).exe
+windows: LDFLAGS=-lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -loleaut32 -L/path/to/libs -Iinclude/third_party/imgui -Iinclude/third_party/lua
+windows: PLATFORM_FLAGS=-DPLATFORM_WINDOWS
+windows: all
+
+.PHONY: all run debug clean gcc clang assets exe_only windows
