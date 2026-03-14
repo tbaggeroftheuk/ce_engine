@@ -30,21 +30,23 @@ float highFps = 0.00f;
 
 void showFPS() {
     ImGui::Spacing();
-    int CurrentFPS = GetFPS();
- 
-    if (CurrentFPS > 5 && CurrentFPS < minFps) minFps = CurrentFPS;
+
+    float CurrentFPS = static_cast<float>(GetFPS());
+
+    if (CurrentFPS > 5.0f && CurrentFPS < minFps) minFps = CurrentFPS;
     if (CurrentFPS > highFps) highFps = CurrentFPS;
-    if (highFps > CE::MaxFPS) highFps = CE::MaxFPS;
+    if (highFps > static_cast<float>(CE::MaxFPS)) highFps = static_cast<float>(CE::MaxFPS);
 
     avgFps = CurrentFPS;
+
     ImGui::Spacing();
     ImGui::Text("Max FPS: %i", CE::MaxFPS);
     ImGui::Spacing();
-    ImGui::Text("Avg FPS: %f", avgFps);
+    ImGui::Text("Avg FPS: %.2f", avgFps);
     ImGui::Spacing();
-    ImGui::Text("Min FPS: %f", minFps);
+    ImGui::Text("Min FPS: %.2f", minFps);
     ImGui::Spacing();
-    ImGui::Text("High FPS: %f", highFps);
+    ImGui::Text("High FPS: %.2f", highFps);
 }
 
 void showFlags() {
