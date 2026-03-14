@@ -77,7 +77,7 @@ jobs:
       id: release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: ${{ github.sha }}
+        tag_name: v1.0.${{ github.run_number }}  # Creates tags like v1.0.123
         name: Release ${{ github.sha }}
         body: |
           Changes in this build:
