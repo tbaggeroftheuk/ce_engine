@@ -15,19 +15,19 @@ EXE := $(TARGET)
 # Detect OS
 # =========================
 ifeq ($(OS),Windows_NT)
-	HOST_OS := Windows
+        HOST_OS := Windows
 else
-	UNAME_S := $(shell uname -s)
-	ifeq ($(UNAME_S),Linux)
-		HOST_OS := Linux
-	endif
-	ifeq ($(UNAME_S),Darwin)
-		HOST_OS := macOS
-	endif
+        UNAME_S := $(shell uname -s)
+        ifeq ($(UNAME_S),Linux)
+                HOST_OS := Linux
+        endif
+        ifeq ($(UNAME_S),Darwin)
+                HOST_OS := macOS
+        endif
 endif
 
 ifeq ($(strip $(HOST_OS)),)
-	HOST_OS := Unknown OS
+        HOST_OS := Unknown OS
 endif
 
 HOST_OS_ESCAPED := "\"$(HOST_OS)\""
@@ -39,10 +39,22 @@ CC  := clang
 CXX := clang++
 
 ifeq ($(OS),Windows_NT)
-	EXE := $(TARGET).exe
-	PLATFORM_FLAGS := -DPLATFORM_WINDOWS
+        EXE := $(TARGET).exe
+        PLATFORM_FLAGS := -DPLATFORM_WINDOWS
+        # Add architecture defines for Windows
+        ifeq ($(PROCESSOR_ARCHITECTURE),AMD64)
+                ARCH_FLAGS := -D_WIN64 -D_M_X64
+        else
+                ifeq ($(PROCESSOR_ARCHITECTURE),x86)
+                        ARCH_FLAGS := -D_WIN32 -D_M_IX86
+                else
+                        # Default to 64-bit if can't detect
+                        ARCH_FLAGS := -D_WIN64 -D_M_X64
+                endif
+        endif
 else
-	PLATFORM_FLAGS :=
+        PLATFORM_FLAGS :=
+        ARCH_FLAGS :=
 endif
 
 # =========================
@@ -62,29 +74,31 @@ CFLAGS := -Wall -Wextra -I$(INCLUDE_DIR) -I$(INCLUDE_DIR)/third_party -I$(INCLUD
 
 CXXFLAGS := -Wall -Wextra -std=c++20 \
     -I$(INCLUDE_DIR)/third_party \
-	-I$(INCLUDE_DIR)/third_party/imgui \
-	-I$(INCLUDE_DIR)/third_party/lua \
+        -I$(INCLUDE_DIR)/third_party/imgui \
+        -I$(INCLUDE_DIR)/third_party/lua \
     -I$(INCLUDE_DIR) \
     $(PLATFORM_FLAGS) \
+    $(ARCH_FLAGS) \
+    -D_CRT_SECURE_NO_WARNINGS \
     -DENGINE_BUILT_ON_OS=$(HOST_OS_ESCAPED) \
-	-DCE_DATA_FILE_NAME=\"$(DATA_FILE_NAME)\"
+        -DCE_DATA_FILE_NAME=\"$(DATA_FILE_NAME)\"
 
 # =========================
 # Linker flags
 # =========================
 ifeq ($(OS),Windows_NT)
-	LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -Iinclude/third_party/imgui -Iinclude/third_party/lua 
+        LDFLAGS := -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -Iinclude/third_party/imgui -Iinclude/third_party/lua 
 else
-	LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi -Iinclude/third_party/imgui -Iinclude/third_party/lua 
+        LDFLAGS := -lraylib -lm -lGL -lX11 -lpthread -ldl -lrt -lXi -Iinclude/third_party/imgui -Iinclude/third_party/lua 
 endif
 
 # Windows GUI subsystem
 ifeq ($(OS),Windows_NT)
-	ifeq ($(filter debug,$(MAKECMDGOALS)),)
-		SUBSYSTEM_FLAG := -Wl,-subsystem,windows
-	else
-		SUBSYSTEM_FLAG :=
-	endif
+        ifeq ($(filter debug,$(MAKECMDGOALS)),)
+                SUBSYSTEM_FLAG := -Wl,-subsystem,windows
+        else
+                SUBSYSTEM_FLAG :=
+        endif
 endif
 
 # =========================
@@ -98,29 +112,29 @@ TCF_CMD := python $(SCRIPT_FOLDER)/tcf.py pack $(ASSET_FOLDER) data.tcf
 all: $(EXE)
 
 $(EXE): $(OBJ)
-	@echo "Packing assets..."
-	@$(TCF_CMD)
-	@echo "Linking executable on $(HOST_OS)..."
-	$(CXX) -o $@ $(OBJ) $(LDFLAGS) $(SUBSYSTEM_FLAG)
+        @echo "Packing assets..."
+        @$(TCF_CMD)
+        @echo "Linking executable on $(HOST_OS)..."
+        $(CXX) -o $@ $(OBJ) $(LDFLAGS) $(SUBSYSTEM_FLAG)
 
 # Compile C++ (with original flags)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
-	@mkdir -p $(dir $@)
-	$(CXX) $(CXXFLAGS) -c $< -o $@
+        @mkdir -p $(dir $@)
+        $(CXX) $(CXXFLAGS) -c $< -o $@
 
 # Compile C (with original flags)
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) -c $< -o $@
+        @mkdir -p $(dir $@)
+        $(CC) $(CFLAGS) -c $< -o $@
 
 # =========================
 # Run
 # =========================
 run: $(EXE)
 ifeq ($(OS),Windows_NT)
-	@echo "Run manually: $(EXE)"
+        @echo "Run manually: $(EXE)"
 else
-	./$(EXE)
+        ./$(EXE)
 endif
 
 # =========================
@@ -134,7 +148,7 @@ debug: clean all
 # Clean
 # =========================
 clean:
-	rm -rf $(BUILD_DIR) $(EXE)
+        rm -rf $(BUILD_DIR) $(EXE)
 
 
 # =========================
@@ -143,33 +157,35 @@ clean:
 GRAPHICS_BACKEND ?= X11  # default
 
 ifeq ($(GRAPHICS_BACKEND),X11)
-	CXXFLAGS += -DGRAPHICS_BACKEND_X11
+        CXXFLAGS += -DGRAPHICS_BACKEND_X11
 endif
 ifeq ($(GRAPHICS_BACKEND),WAYLAND)
-	CXXFLAGS += -DGRAPHICS_BACKEND_WAYLAND
+        CXXFLAGS += -DGRAPHICS_BACKEND_WAYLAND
 endif
 gcc:
-	$(MAKE) CC=gcc CXX=g++
+        $(MAKE) CC=gcc CXX=g++
 
 clang:
-	$(MAKE) CC=clang CXX=clang++
+        $(MAKE) CC=clang CXX=clang++
 
 assets:
-	rm $(DATA_FILE_NAME)
-	@echo "Packing assets only..."
-	@$(TCF_CMD)
+        rm $(DATA_FILE_NAME)
+        @echo "Packing assets only..."
+        @$(TCF_CMD)
 
 # Build executable only (skip asset packing)
 exe_only: $(OBJ)
-	@echo "Linking executable on $(HOST_OS)..."
-	$(CXX) -o $(EXE) $(OBJ) $(LDFLAGS) $(SUBSYSTEM_FLAG)
+        @echo "Linking executable on $(HOST_OS)..."
+        $(CXX) -o $(EXE) $(OBJ) $(LDFLAGS) $(SUBSYSTEM_FLAG)
 
 
 windows: CC=x86_64-w64-mingw32-gcc
 windows: CXX=x86_64-w64-mingw32-g++
 windows: EXE=$(TARGET).exe
-windows: LDFLAGS=-lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -loleaut32 -L/path/to/libs -Iinclude/third_party/imgui -Iinclude/third_party/lua
+windows: LDFLAGS=-lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32 -L/path/to/libs -Iinclude/third_party/imgui -Iinclude/third_party/lua
 windows: PLATFORM_FLAGS=-DPLATFORM_WINDOWS
+windows: ARCH_FLAGS=-D_WIN64 -D_M_X64  # Force 64-bit for MinGW cross-compile
+windows: CXXFLAGS += -D_CRT_SECURE_NO_WARNINGS
 windows: all
 
 .PHONY: all run debug clean gcc clang assets exe_only windows
