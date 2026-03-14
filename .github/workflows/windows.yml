@@ -1,0 +1,60 @@
+name: C/C++ CI
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    # Install MSYS2 and packages
+    - name: Setup MSYS2 and dependencies
+      uses: msys2/setup-msys2@v2
+      with:
+        update: true
+        install: >
+          mingw-w64-x86_64-toolchain
+          mingw-w64-x86_64-raylib
+          mingw-w64-x86_64-pkg-config
+          mingw-w64-x86_64-python3
+          mingw-w64-x86_64-git
+        path-type: inherit
+
+    # Build your project in mingw64 shell
+    - name: Build project
+      shell: msys2 {0}
+      run: |
+        echo "Starting MinGW64 build..."
+        make exe_only
+
+    # Create GitHub release
+    - name: Create Release
+      id: create_release
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        release_name: Release v1.0.${{ github.run_number }}
+        draft: false
+        prerelease: false
+
+    # Upload Windows executable
+    - name: Upload Release Asset
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: ./ce_engine.exe
+        asset_name: ce_engine_windows.exe
+        asset_content_type: application/octet-stream
