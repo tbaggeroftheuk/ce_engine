@@ -11,7 +11,6 @@ extern "C" {
 
 #include "engine/lua.hpp"
 #include "globals.hpp"
-#include "engine/lua.hpp"
 
 int g_luaUpdateRef = LUA_NOREF; // global reference to Update()
 

@@ -19,10 +19,10 @@ namespace CE::Lua::Functions::Time {
         lua_newtable(L); // Table "Time"
         
         lua_pushcfunction(L, CE_GetDeltaTime);
-        lua_setfield(L, -1, "Delta");
+        lua_setfield(L, -2, "Delta");
 
         lua_pushcfunction(L, CE_GetTime);
-        lua_setfield(L, -1, "Time");
+        lua_setfield(L, -2, "Time");
 
         lua_setglobal(L, "Time");
     }
