@@ -102,14 +102,14 @@ target_link_libraries(ce_engine
 
 endif()
 
-# =========================
-# Asset packing
-# =========================
-
-add_custom_command(
-    TARGET ce_engine PRE_BUILD
-    COMMAND python ${CMAKE_SOURCE_DIR}/scripts/tcf.py
-            pack
-            ${CMAKE_SOURCE_DIR}/assets
-            ${CMAKE_BINARY_DIR}/data.tcf
-)
+if(EXISTS "${CMAKE_SOURCE_DIR}/assets")
+    add_custom_command(
+        TARGET ce_engine PRE_BUILD
+        COMMAND python "${CMAKE_SOURCE_DIR}/scripts/tcf.py"
+                pack
+                "${CMAKE_SOURCE_DIR}/assets"
+                "${CMAKE_BINARY_DIR}/data.tcf"
+    )
+else()
+    message(WARNING "Assets folder not found: skipping tcf.py pack")
+endif()
