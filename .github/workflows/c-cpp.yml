@@ -19,7 +19,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
 
+    # -----------------------------
     # Install dependencies
+    # -----------------------------
     - name: Install Linux dependencies
       if: runner.os == 'Linux'
       run: |
@@ -34,7 +36,9 @@ jobs:
         choco install -y cmake git visualstudio2022buildtools
         refreshenv
 
-    # Build and install Raylib
+    # -----------------------------
+    # Build Raylib
+    # -----------------------------
     - name: Build Raylib (Linux)
       if: runner.os == 'Linux'
       run: |
@@ -57,21 +61,25 @@ jobs:
         cmake -G "Visual Studio 17 2022" -A x64 ..
         cmake --build . --config Release
 
-    # Build your project
-    - name: Build project (Linux)
+    # -----------------------------
+    # Build ce_engine using Makefile
+    # -----------------------------
+    - name: Build ce_engine (Linux)
       if: runner.os == 'Linux'
-      run: make exe_only
+      run: |
+        cd ${{ github.workspace }}
+        make exe_only
 
-    - name: Build project (Windows)
+    - name: Build ce_engine (Windows)
       if: runner.os == 'Windows'
       shell: powershell
       run: |
-        cd raylib/build
-        cmake --build . --config Release
-        # Adjust the path below to your final .exe output
-        Copy-Item ".\Release\ce_engine.exe" "..\.."
+        cd ${{ github.workspace }}
+        make exe_only
 
-    # Create Release (only once, on Linux job)
+    # -----------------------------
+    # Create Release (only once)
+    # -----------------------------
     - name: Create Release
       if: runner.os == 'Linux'
       id: create_release
@@ -84,7 +92,9 @@ jobs:
         draft: false
         prerelease: false
 
+    # -----------------------------
     # Upload Linux ELF
+    # -----------------------------
     - name: Upload Linux ELF
       if: runner.os == 'Linux'
       uses: actions/upload-release-asset@v1
@@ -96,14 +106,16 @@ jobs:
         asset_name: ce_engine
         asset_content_type: application/octet-stream
 
+    # -----------------------------
     # Upload Windows EXE
+    # -----------------------------
     - name: Upload Windows EXE
       if: runner.os == 'Windows'
       uses: actions/upload-release-asset@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
-        upload_url: ${{ needs.build.outputs.create_release_upload_url }}
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
         asset_path: ./ce_engine.exe
         asset_name: ce_engine.exe
         asset_content_type: application/octet-stream
