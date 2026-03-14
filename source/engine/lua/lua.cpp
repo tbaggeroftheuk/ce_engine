@@ -62,10 +62,13 @@ namespace CE::Lua {
         CE::Lua::Functions::ExposeFunctions();
         CE::Lua::Functions::ce_functions::Register(L);
         CE::Lua::Functions::RaylibBindings::Register(L);
-        CE::Lua::Functions::Assets::Register(L);
+        CE::Lua::Functions::Primitives::Register(L);
         CE::Lua::Functions::Assets::Textures::Register(L);
         CE::Lua::Functions::Assets::Audio::Register(L);
         CE::Lua::Functions::Assets::Fonts::Register(L);
+        CE::Lua::Functions::Time::Register(L);
+        CE::Lua::Functions::Misc::Register(L);
+        
     }
 
     void LoadStartup() {

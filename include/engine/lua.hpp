@@ -36,7 +36,7 @@ namespace CE::Lua::Functions::ce_functions {
     void Register(lua_State* L);
 }
 
-namespace CE::Lua::Functions::Assets {
+namespace CE::Lua::Functions::Primitives {
     void Register(lua_State* L);
 }
 
@@ -50,5 +50,13 @@ namespace CE::Lua::Functions::Assets::Audio {
 
 
 namespace CE::Lua::Functions::Assets::Fonts {
+    void Register(lua_State* L);
+}
+
+namespace CE::Lua::Functions::Time {
+    void Register(lua_State* L);
+}
+
+namespace CE::Lua::Functions::Misc {
     void Register(lua_State* L);
 }

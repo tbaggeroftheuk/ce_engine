@@ -144,19 +144,16 @@ static int lua_Draw_Line(lua_State* L) {
     return 0;
 }
 
-namespace CE::Lua::Functions::Assets {
+namespace CE::Lua::Functions::Primitives {
         void Register(lua_State* L) {
-            // --- Color ---
             RegisterColor(L);
 
-            // --- Primitive helpers ---
             lua_pushcfunction(L, lua_Vec2);
             lua_setglobal(L, "Vec2");
 
             lua_pushcfunction(L, lua_Rect);
             lua_setglobal(L, "Rect");
 
-            // --- Draw primitives ---
             lua_newtable(L); // Draw table
 
             lua_pushcfunction(L, lua_Draw_Clear);

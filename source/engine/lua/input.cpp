@@ -16,11 +16,6 @@ extern "C" {
 
 #include "engine/lua.hpp"
 #include "globals.hpp"
-int CE_OpenURL(lua_State* L) {
-    const char* url = LCS(L, 1);
-    OpenURL(url);
-    return 0;
-}
 
 int CE_HideCursor(lua_State* L) {
     HideCursor();
@@ -290,12 +285,5 @@ namespace CE::Lua::Functions::RaylibBindings {
         lua_setfield(L, -2, "GetMousePosition");
 
         lua_setglobal(L, "Mouse");
-
-        lua_newtable(L);
-
-        lua_pushcfunction(L, CE_OpenURL);
-        lua_setfield(L, -2, "OpenURL");
-
-        lua_setglobal(L, "Misc");
     }   
 }
