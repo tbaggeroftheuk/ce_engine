@@ -16,13 +16,6 @@ jobs:
       matrix:
         os: [windows-latest, ubuntu-latest]
         compiler: [cl, clang]
-        include:
-          - os: windows-latest
-            compiler: cl
-          - os: windows-latest
-            compiler: clang
-          - os: ubuntu-latest
-            compiler: clang
 
     steps:
     - uses: actions/checkout@v4
@@ -61,8 +54,9 @@ jobs:
         -DRAYLIB_NO_WARNINGS=ON \
         -S ${{ github.workspace }}"
 
+        # Windows + MSVC: force Visual Studio generator + x64
         if [ "${{ matrix.os }}" = "windows-latest" ] && [ "${{ matrix.compiler }}" = "cl" ]; then
-          CMAKE_ARGS="$CMAKE_ARGS -A x64"
+          CMAKE_ARGS="$CMAKE_ARGS -G \"Visual Studio 17 2022\" -A x64"
         fi
 
         echo "Running: cmake $CMAKE_ARGS"
@@ -73,9 +67,6 @@ jobs:
       shell: bash
       run: |
         BUILD_CMD="cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release"
-        if [ "${{ matrix.os }}" = "windows-latest" ] && [ "${{ matrix.compiler }}" = "cl" ]; then
-          BUILD_CMD="$BUILD_CMD -- /p:Platform=x64"
-        fi
         echo "Running: $BUILD_CMD"
         $BUILD_CMD
 
