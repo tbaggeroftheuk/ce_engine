@@ -29,37 +29,13 @@ jobs:
         sudo apt-get install -y build-essential clang cmake pkg-config python3 python3-pip git \
           libgl1-mesa-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev libxinerama-dev libxext-dev
 
-    - name: Install MSYS2 / MinGW64
-      if: runner.os == 'Windows'
-      shell: powershell
-      run: |
-        choco install -y msys2
-        refreshenv
-        setx PATH "$env:PATH;C:\tools\msys64\usr\bin;C:\tools\msys64\mingw64\bin"
-
-    # -----------------------------
-    # Build Raylib
-    # -----------------------------
-    - name: Build Raylib (Linux)
-      if: runner.os == 'Linux'
-      run: |
-        git clone https://github.com/raysan5/raylib.git
-        cd raylib
-        mkdir build && cd build
-        cmake -DBUILD_SHARED_LIBS=ON ..
-        make -j4
-        sudo make install
-        sudo ldconfig
-
-    - name: Build Raylib (Windows, MinGW)
+    - name: Install MSYS2 / MinGW64 and Raylib
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        git clone https://github.com/raysan5/raylib.git
-        cd raylib
-        mkdir build && cd build
-        cmake -G "MSYS Makefiles" -DBUILD_SHARED_LIBS=ON ..
-        make -j4
+        # Install MSYS2 (assumes pre-installed via GitHub runner)
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm mingw-w64-x86_64-toolchain mingw-w64-x86_64-raylib mingw-w64-x86_64-python mingw-w64-x86_64-pkg-config
 
     # -----------------------------
     # Build ce_engine using Makefile
@@ -74,9 +50,10 @@ jobs:
       if: runner.os == 'Windows'
       shell: bash
       run: |
-        cd $GITHUB_WORKSPACE
-        # Use MinGW64 compiler
-        make exe_only CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++
+        cd "$GITHUB_WORKSPACE"
+        make exe_only CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ \
+             CXXFLAGS="-Wall -Wextra -std=c++20 -I/mingw64/include" \
+             LDFLAGS="-L/mingw64/lib -lraylib -lole32 -luuid -lcomdlg32 -limm32 -loleaut32"
 
     # -----------------------------
     # Create Release (only on Linux)
