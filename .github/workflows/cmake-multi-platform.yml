@@ -8,6 +8,9 @@ jobs:
   build:
     runs-on: ${{ matrix.os }}
 
+    permissions:
+      contents: write  # Required for creating releases and pushing tags
+
     strategy:
       fail-fast: false
       matrix:
@@ -41,22 +44,14 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    # Install dependencies for Ubuntu (X11 + OpenGL + build tools)
+    # Install dependencies for Ubuntu
     - name: Install dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y \
-          libx11-dev \
-          libxrandr-dev \
-          libxinerama-dev \
-          libxcursor-dev \
-          libxi-dev \
-          build-essential \
-          cmake \
-          clang \
-          libgl1-mesa-dev \
-          libglu1-mesa-dev
+          libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev \
+          build-essential cmake clang libgl1-mesa-dev libglu1-mesa-dev
 
     # Configure CMake
     - name: Configure CMake
@@ -72,12 +67,21 @@ jobs:
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
+    # Create Git tag for this release
+    - name: Create Git Tag
+      run: |
+        git config user.name "github-actions"
+        git config user.email "github-actions@github.com"
+        TAG=v1.0.${{ github.run_number }}
+        git tag $TAG
+        git push origin $TAG
+
     # Create a GitHub Release
     - name: Create Release
       id: release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v1.0.${{ github.run_number }}  # Creates tags like v1.0.123
+        tag_name: v1.0.${{ github.run_number }}
         name: Release ${{ github.sha }}
         body: |
           Changes in this build:
