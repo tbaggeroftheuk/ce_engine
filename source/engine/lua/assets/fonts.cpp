@@ -14,29 +14,36 @@ extern "C" {
 #define LPS lua_pushstring
 #define LPN lua_pushnumber
 
-struct LuaColor {
-    Color c;
-};
+static Color LuaOptColor(lua_State* L, int idx, Color fallback) {
+    if (lua_isnoneornil(L, idx)) return fallback;
 
-int lua_Color_new(lua_State* L) {
-    int r = luaL_optinteger(L, 1, 255);
-    int g = luaL_optinteger(L, 2, 255);
-    int b = luaL_optinteger(L, 3, 255);
-    int a = luaL_optinteger(L, 4, 255);
+    if (lua_isuserdata(L, idx)) {
+        LuaColor* lc = (LuaColor*)luaL_testudata(L, idx, "ColorMeta");
+        if (lc) return lc->c;
+        return fallback;
+    }
 
-    LuaColor* lc = (LuaColor*)lua_newuserdata(L, sizeof(LuaColor));
-    lc->c = { (unsigned char)r, (unsigned char)g, (unsigned char)b, (unsigned char)a };
+    if (!lua_istable(L, idx)) return fallback;
 
-    luaL_getmetatable(L, "ColorMeta");
-    lua_setmetatable(L, -2);
+    Color c = fallback;
 
-    return 1; // userdata on stack
-}
+    lua_getfield(L, idx, "r");
+    c.r = (unsigned char)luaL_optinteger(L, -1, 255);
+    lua_pop(L, 1);
 
-int lua_Color_tostring(lua_State* L) {
-    LuaColor* lc = (LuaColor*)luaL_checkudata(L, 1, "ColorMeta");
-    lua_pushfstring(L, "Color(r=%d, g=%d, b=%d, a=%d)", lc->c.r, lc->c.g, lc->c.b, lc->c.a);
-    return 1;
+    lua_getfield(L, idx, "g");
+    c.g = (unsigned char)luaL_optinteger(L, -1, 255);
+    lua_pop(L, 1);
+
+    lua_getfield(L, idx, "b");
+    c.b = (unsigned char)luaL_optinteger(L, -1, 255);
+    lua_pop(L, 1);
+
+    lua_getfield(L, idx, "a");
+    c.a = (unsigned char)luaL_optinteger(L, -1, 255);
+    lua_pop(L, 1);
+
+    return c;
 }
 
 int CE_Load_Font(lua_State* L) {
@@ -65,20 +72,19 @@ int CE_UnloadAll_Fonts(lua_State* L) {
     return 0;
 }
 
+int CE_SetDefault_Font(lua_State* L) {
+    const char* Name = LCS(L, 1);
+    CE::Assets::Fonts::SetDefaultFont(Name);
+    return 0;
+}
+
 int CE_Draw_Font(lua_State* L) {
     const char* Text = LCS(L, 1);
     const int Size = LCI(L, 2);
     const int PosX = LCI(L, 3);
     const int PosY = LCI(L, 4);
 
-    Color tint = BLACK;
-
-    if (lua_isuserdata(L, 5)) {
-        LuaColor* lc = (LuaColor*)luaL_testudata(L, 4, "ColorMeta");
-        if (lc) {
-            tint = lc->c;
-        }
-    }
+    Color tint = LuaOptColor(L, 5, BLACK);
     CE::Assets::Fonts::Draw(Text, Size, PosX, PosY, tint);
     return 0;
 }
@@ -87,18 +93,11 @@ int CE_DrawEx_Font(lua_State* L) {
     const char* Name = LCS(L, 1);
     const char* Text = LCS(L, 2);
     const int Size = LCI(L, 3);
-    const int PosX = LCI(L, 3);
-    const int PosY = LCI(L, 4);
+    const int PosX = LCI(L, 4);
+    const int PosY = LCI(L, 5);
 
-    Color tint = BLACK;
-
-    if (lua_isuserdata(L, 6)) {
-        LuaColor* lc = (LuaColor*)luaL_testudata(L, 4, "ColorMeta");
-        if (lc) {
-            tint = lc->c;
-        }
-    }
-    CE::Assets::Fonts::Draw(Text, Size, PosX, PosY, tint);
+    Color tint = LuaOptColor(L, 6, BLACK);
+    CE::Assets::Fonts::DrawEx(Name, Text, Size, PosX, PosY, tint);
     return 0;
 }
 
@@ -111,6 +110,15 @@ namespace CE::Lua::Functions::Assets::Fonts {
 
         lua_pushcfunction(L, CE_Load_FontEx);
         lua_setfield(L, -2, "LoadEx");
+
+        lua_pushcfunction(L, CE_Unload_Font);
+        lua_setfield(L, -2, "Unload");
+
+        lua_pushcfunction(L, CE_UnloadAll_Fonts);
+        lua_setfield(L, -2, "UnloadAll");
+
+        lua_pushcfunction(L, CE_SetDefault_Font);
+        lua_setfield(L, -2, "SetDefault");
 
         lua_setglobal(L, "Fonts");
 

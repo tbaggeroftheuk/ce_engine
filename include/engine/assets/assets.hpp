@@ -65,6 +65,8 @@ namespace CE::Assets::Fonts {
     void Draw(const std::string& text, int fontsize, int PosX, int PosY, const Color color);
     void DrawEx(const std::string& name, const std::string& text, int fontsize, int PosX, int PosY, const Color color);
 
+    void SetDefaultFont(const std::string& name);
+
     void Unload(const std::string& name);
     void UnloadAll();
 }

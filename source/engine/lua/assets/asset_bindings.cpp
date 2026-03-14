@@ -14,9 +14,37 @@ extern "C" {
 #define LPS lua_pushstring
 #define LPN lua_pushnumber
 
-struct LuaColor {
-    Color c;
-};
+static Color LuaOptColor(lua_State* L, int idx, Color fallback) {
+    if (lua_isnoneornil(L, idx)) return fallback;
+
+    if (lua_isuserdata(L, idx)) {
+        LuaColor* lc = (LuaColor*)luaL_testudata(L, idx, "ColorMeta");
+        if (lc) return lc->c;
+        return fallback;
+    }
+
+    if (!lua_istable(L, idx)) return fallback;
+
+    Color c = fallback;
+
+    lua_getfield(L, idx, "r");
+    c.r = (unsigned char)luaL_optinteger(L, -1, 255);
+    lua_pop(L, 1);
+
+    lua_getfield(L, idx, "g");
+    c.g = (unsigned char)luaL_optinteger(L, -1, 255);
+    lua_pop(L, 1);
+
+    lua_getfield(L, idx, "b");
+    c.b = (unsigned char)luaL_optinteger(L, -1, 255);
+    lua_pop(L, 1);
+
+    lua_getfield(L, idx, "a");
+    c.a = (unsigned char)luaL_optinteger(L, -1, 255);
+    lua_pop(L, 1);
+
+    return c;
+}
 
 int lua_Color_new(lua_State* L) {
     int r = luaL_optinteger(L, 1, 255);
@@ -51,89 +79,68 @@ void RegisterColor(lua_State* L) {
     lua_setglobal(L, "Color"); // now Lua can do color(r,g,b,a)
 }
 
-int TextureLoad(lua_State* L) {
-    const char* Name = LCS(L, 1);
-    const char* Path = LCS(L, 2);
+static int lua_Vec2(lua_State* L) {
+    const double x = luaL_optnumber(L, 1, 0.0);
+    const double y = luaL_optnumber(L, 2, 0.0);
 
-    CE::Assets::Textures::Load(Name, Path);
+    lua_newtable(L);
+    lua_pushnumber(L, x);
+    lua_setfield(L, -2, "x");
+    lua_pushnumber(L, y);
+    lua_setfield(L, -2, "y");
+    return 1;
+}
+
+static int lua_Rect(lua_State* L) {
+    const double x = luaL_optnumber(L, 1, 0.0);
+    const double y = luaL_optnumber(L, 2, 0.0);
+    const double w = luaL_optnumber(L, 3, 0.0);
+    const double h = luaL_optnumber(L, 4, 0.0);
+
+    lua_newtable(L);
+    lua_pushnumber(L, x);
+    lua_setfield(L, -2, "x");
+    lua_pushnumber(L, y);
+    lua_setfield(L, -2, "y");
+    lua_pushnumber(L, w);
+    lua_setfield(L, -2, "w");
+    lua_pushnumber(L, h);
+    lua_setfield(L, -2, "h");
+    return 1;
+}
+
+static int lua_Draw_Clear(lua_State* L) {
+    const Color color = LuaOptColor(L, 1, BLACK);
+    ClearBackground(color);
     return 0;
 }
 
-int TextureLoadFolder(lua_State* L) {
-    const char* FolderPath = LCS(L, 1);
-    CE::Assets::Textures::LoadFolder(FolderPath);
+static int lua_Draw_Rect(lua_State* L) {
+    const int x = LCI(L, 1);
+    const int y = LCI(L, 2);
+    const int w = LCI(L, 3);
+    const int h = LCI(L, 4);
+    const Color color = LuaOptColor(L, 5, WHITE);
+    DrawRectangle(x, y, w, h, color);
     return 0;
 }
 
-int TexturesDraw(lua_State* L) {
-    const char* name = LCS(L, 1);
-    const int posX = LCI(L, 2);
-    const int posY = LCI(L, 3);
-
-    Color tint = WHITE;
-
-    if (lua_isuserdata(L, 4)) {
-        LuaColor* lc = (LuaColor*)luaL_testudata(L, 4, "ColorMeta");
-        if (lc) {
-            tint = lc->c;
-        }
-    } 
-    else if (lua_istable(L, 4)) {
-        lua_getfield(L, 4, "r");
-        tint.r = luaL_optinteger(L, -1, 255);
-        lua_pop(L, 1);
-
-        lua_getfield(L, 4, "g");
-        tint.g = luaL_optinteger(L, -1, 255);
-        lua_pop(L, 1);
-
-        lua_getfield(L, 4, "b");
-        tint.b = luaL_optinteger(L, -1, 255);
-        lua_pop(L, 1);
-
-        lua_getfield(L, 4, "a");
-        tint.a = luaL_optinteger(L, -1, 255);
-        lua_pop(L, 1);
-    }
-
-    CE::Assets::Textures::Draw(name, posX, posY, tint);
+static int lua_Draw_Circle(lua_State* L) {
+    const int x = LCI(L, 1);
+    const int y = LCI(L, 2);
+    const float r = (float)LCN(L, 3);
+    const Color color = LuaOptColor(L, 4, WHITE);
+    DrawCircle(x, y, r, color);
     return 0;
 }
 
-int AudioMusicLoad(lua_State* L) {
-    const char* Path = LCS(L, 1);
-    const char* Name = LCS(L, 2);
-
-    CE::Assets::Audio::LoadMusic(Name, Path);
-    return 0;
-}
-
-int AudioMusicPlay(lua_State* L) {
-    const char* Name = LCS(L, 1);
-    CE::Assets::Audio::PlayMusic(Name);
-    return 0;
-}
-
-int AudioMusicPause(lua_State* L) {
-    const char* Name = LCS(L, 1);
-    CE::Assets::Audio::PauseMusic(Name);
-    return 0;
-}
-
-int AudioMusicResume(lua_State* L) {
-    const char* Name = LCS(L, 1);
-    CE::Assets::Audio::ResumeMusic(Name);
-    return 0;
-}
-
-int AudioMusicUnload(lua_State* L) {
-    const char* Name = LCS(L, 1);
-    CE::Assets::Audio::UnloadMusic(Name);
-    return 0;
-}
-
-int AudioMusicUnloadAll(lua_State* L) {
-    CE::Assets::Audio::UnloadAllMusic();
+static int lua_Draw_Line(lua_State* L) {
+    const int x1 = LCI(L, 1);
+    const int y1 = LCI(L, 2);
+    const int x2 = LCI(L, 3);
+    const int y2 = LCI(L, 4);
+    const Color color = LuaOptColor(L, 5, WHITE);
+    DrawLine(x1, y1, x2, y2, color);
     return 0;
 }
 
@@ -142,45 +149,28 @@ namespace CE::Lua::Functions::Assets {
             // --- Color ---
             RegisterColor(L);
 
-            // --- Textures Table ---
-            lua_newtable(L); // stack: [TexturesTable]
+            // --- Primitive helpers ---
+            lua_pushcfunction(L, lua_Vec2);
+            lua_setglobal(L, "Vec2");
 
-            lua_pushcfunction(L, TexturesDraw);
-            lua_setfield(L, -2, "Draw");
+            lua_pushcfunction(L, lua_Rect);
+            lua_setglobal(L, "Rect");
 
-            lua_pushcfunction(L, TextureLoad);
-            lua_setfield(L, -2, "Load");
+            // --- Draw primitives ---
+            lua_newtable(L); // Draw table
 
-            lua_pushcfunction(L, TextureLoadFolder);
-            lua_setfield(L, -2, "LoadFolder");
+            lua_pushcfunction(L, lua_Draw_Clear);
+            lua_setfield(L, -2, "Clear");
 
-            lua_setglobal(L, "Textures"); // pops the table
+            lua_pushcfunction(L, lua_Draw_Rect);
+            lua_setfield(L, -2, "Rect");
 
-            lua_newtable(L); // Audio table
+            lua_pushcfunction(L, lua_Draw_Circle);
+            lua_setfield(L, -2, "Circle");
 
-            lua_newtable(L); // Music table
+            lua_pushcfunction(L, lua_Draw_Line);
+            lua_setfield(L, -2, "Line");
 
-            lua_pushcfunction(L, AudioMusicLoad);
-            lua_setfield(L, -2, "Load");
-
-            lua_pushcfunction(L, AudioMusicUnload);
-            lua_setfield(L, -2, "Unload");
-
-            lua_pushcfunction(L, AudioMusicPlay);
-            lua_setfield(L, -2, "Play");
-
-            lua_pushcfunction(L, AudioMusicPause);
-            lua_setfield(L, -2, "Pause");
-
-            lua_pushcfunction(L, AudioMusicResume);
-            lua_setfield(L, -2, "Resume");
-
-            lua_pushcfunction(L, AudioMusicUnloadAll);
-            lua_setfield(L, -2, "UnloadAll");
-
-            lua_setfield(L, -2, "Music"); // ← FIX HERE
-
-            lua_setglobal(L, "Audio");
-
+            lua_setglobal(L, "Draw");
         }
 }

@@ -63,6 +63,8 @@ namespace CE::Lua {
         CE::Lua::Functions::ce_functions::Register(L);
         CE::Lua::Functions::RaylibBindings::Register(L);
         CE::Lua::Functions::Assets::Register(L);
+        CE::Lua::Functions::Assets::Textures::Register(L);
+        CE::Lua::Functions::Assets::Audio::Register(L);
         CE::Lua::Functions::Assets::Fonts::Register(L);
     }
 

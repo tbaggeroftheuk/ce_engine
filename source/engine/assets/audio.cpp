@@ -328,6 +328,8 @@ namespace CE::Assets::Audio {
         auto lst = Musics.find(name);
         if (lst != Musics.end()) {
             UnloadMusicStream(lst->second);
+            Musics.erase(lst);
+            MusicLoops.erase(name);
             TraceLog(LOG_INFO, "CE-Audio: Unloaded music stream: %s", name.c_str());
             return;
         }
