@@ -11,26 +11,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
-        build_type: [Release]
-        c_compiler: [gcc, clang, cl]
+        os: [windows-latest, ubuntu-latest]
+        compiler: [cl, clang]
         include:
           - os: windows-latest
-            c_compiler: cl
-            cpp_compiler: cl
-          - os: ubuntu-latest
-            c_compiler: gcc
-            cpp_compiler: g++
-          - os: ubuntu-latest
-            c_compiler: clang
-            cpp_compiler: clang++
-        exclude:
+            compiler: cl
           - os: windows-latest
-            c_compiler: gcc
-          - os: windows-latest
-            c_compiler: clang
+            compiler: clang
           - os: ubuntu-latest
-            c_compiler: cl
+            compiler: clang
 
     steps:
     - uses: actions/checkout@v4
@@ -41,43 +30,57 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    # Install dependencies for Ubuntu (X11 + OpenGL + build tools)
+    # Install dependencies on Ubuntu
     - name: Install dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
         sudo apt-get update
         sudo apt-get install -y \
+          build-essential \
+          clang \
+          cmake \
           libx11-dev \
           libxrandr-dev \
           libxinerama-dev \
           libxcursor-dev \
           libxi-dev \
-          build-essential \
-          cmake \
-          clang \
           libgl1-mesa-dev \
           libglu1-mesa-dev
 
     # Configure CMake
     - name: Configure CMake
-      run: >
-        cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
-        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DRAYLIB_NO_WARNINGS=ON
-        -S ${{ github.workspace }}
+      shell: bash
+      run: |
+        CMAKE_ARGS="-B ${{ steps.strings.outputs.build-output-dir }} \
+        -DCMAKE_CXX_COMPILER=${{ matrix.compiler == 'cl' && 'cl' || 'clang++' }} \
+        -DCMAKE_C_COMPILER=${{ matrix.compiler == 'cl' && 'cl' || 'clang' }} \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DRAYLIB_NO_WARNINGS=ON \
+        -S ${{ github.workspace }}"
+
+        if [ "${{ matrix.os }}" = "windows-latest" ] && [ "${{ matrix.compiler }}" = "cl" ]; then
+          CMAKE_ARGS="$CMAKE_ARGS -A x64"
+        fi
+
+        echo "Running: cmake $CMAKE_ARGS"
+        cmake $CMAKE_ARGS
 
     # Build the project
     - name: Build
-      run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
+      run: |
+        BUILD_CMD="cmake --build ${{ steps.strings.outputs.build-output-dir }} --config Release"
+        if [ "${{ matrix.os }}" = "windows-latest" ] && [ "${{ matrix.compiler }}" = "cl" ]; then
+          BUILD_CMD="$BUILD_CMD -- /p:Platform=x64"
+        fi
+        echo "Running: $BUILD_CMD"
+        $BUILD_CMD
 
     # Create a GitHub Release
     - name: Create Release
       id: release
       uses: softprops/action-gh-release@v1
       with:
-        tag_name: v1.0.${{ github.run_number }}  # Creates tags like v1.0.123
+        tag_name: v1.0.${{ github.run_number }}
         name: Release ${{ github.sha }}
         body: |
           Changes in this build:
@@ -89,5 +92,5 @@ jobs:
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
-        name: build-${{ matrix.os }}
+        name: build-${{ matrix.os }}-${{ matrix.compiler }}
         path: ${{ steps.strings.outputs.build-output-dir }}
