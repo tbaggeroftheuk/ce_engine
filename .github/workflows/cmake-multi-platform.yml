@@ -41,7 +41,7 @@ jobs:
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
 
-    # Install dependencies for Ubuntu (X11 + build tools)
+    # Install dependencies for Ubuntu (X11 + OpenGL + build tools)
     - name: Install dependencies (Ubuntu)
       if: matrix.os == 'ubuntu-latest'
       run: |
@@ -54,19 +54,25 @@ jobs:
           libxi-dev \
           build-essential \
           cmake \
-          clang
+          clang \
+          libgl1-mesa-dev \
+          libglu1-mesa-dev
 
+    # Configure CMake
     - name: Configure CMake
       run: >
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
+        -DRAYLIB_NO_WARNINGS=ON
         -S ${{ github.workspace }}
 
+    # Build the project
     - name: Build
       run: cmake --build ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }}
 
+    # Create a GitHub Release
     - name: Create Release
       id: release
       uses: softprops/action-gh-release@v1
@@ -79,6 +85,7 @@ jobs:
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
+    # Upload build artifacts
     - name: Upload Build Artifacts
       uses: actions/upload-artifact@v4
       with:
