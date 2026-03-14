@@ -14,6 +14,11 @@ set(DATA_FILE_NAME "data.tcf")
 set(SRC_DIR source)
 set(INCLUDE_DIR include)
 
+if(WIN32)
+    # Force x64 architecture
+    set(CMAKE_GENERATOR_PLATFORM x64 CACHE STRING "" FORCE)
+endif()
+
 # Graphics backend
 set(GRAPHICS_BACKEND "X11" CACHE STRING "Graphics backend")
 
