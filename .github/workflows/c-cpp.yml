@@ -29,12 +29,13 @@ jobs:
         sudo apt-get install -y build-essential clang cmake pkg-config python3 python3-pip git \
           libgl1-mesa-dev libx11-dev libxi-dev libxrandr-dev libxcursor-dev libxinerama-dev libxext-dev
 
-    - name: Install Windows dependencies
+    - name: Install MSYS2 / MinGW64
       if: runner.os == 'Windows'
       shell: powershell
       run: |
-        choco install -y cmake git visualstudio2022buildtools
+        choco install -y msys2
         refreshenv
+        setx PATH "$env:PATH;C:\tools\msys64\usr\bin;C:\tools\msys64\mingw64\bin"
 
     # -----------------------------
     # Build Raylib
@@ -50,16 +51,15 @@ jobs:
         sudo make install
         sudo ldconfig
 
-    - name: Build Raylib (Windows)
+    - name: Build Raylib (Windows, MinGW)
       if: runner.os == 'Windows'
-      shell: powershell
+      shell: bash
       run: |
         git clone https://github.com/raysan5/raylib.git
         cd raylib
-        mkdir build
-        cd build
-        cmake -G "Visual Studio 17 2022" -A x64 ..
-        cmake --build . --config Release
+        mkdir build && cd build
+        cmake -G "MSYS Makefiles" -DBUILD_SHARED_LIBS=ON ..
+        make -j4
 
     # -----------------------------
     # Build ce_engine using Makefile
@@ -70,15 +70,16 @@ jobs:
         cd ${{ github.workspace }}
         make exe_only
 
-    - name: Build ce_engine (Windows)
+    - name: Build ce_engine (Windows, MinGW)
       if: runner.os == 'Windows'
-      shell: powershell
+      shell: bash
       run: |
-        cd ${{ github.workspace }}
-        make exe_only
+        cd $GITHUB_WORKSPACE
+        # Use MinGW64 compiler
+        make exe_only CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++
 
     # -----------------------------
-    # Create Release (only once)
+    # Create Release (only on Linux)
     # -----------------------------
     - name: Create Release
       if: runner.os == 'Linux'
