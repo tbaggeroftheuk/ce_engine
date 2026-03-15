@@ -118,12 +118,6 @@ static int CE_Audio_Music_Play(lua_State* L) {
     return 0;
 }
 
-static int CE_Audio_Music_Update(lua_State* L) {
-    (void)L;
-    CE::Assets::Audio::UpdateMusic();
-    return 0;
-}
-
 static int CE_Audio_Music_Pause(lua_State* L) {
     const char* name = LCS(L, 1);
     CE::Assets::Audio::PauseMusic(name);
@@ -227,8 +221,6 @@ namespace CE::Lua::Functions::Assets::Audio {
         lua_setfield(L, -2, "LoadFolder");
         lua_pushcfunction(L, CE_Audio_Music_Play);
         lua_setfield(L, -2, "Play");
-        lua_pushcfunction(L, CE_Audio_Music_Update);
-        lua_setfield(L, -2, "Update");
         lua_pushcfunction(L, CE_Audio_Music_Pause);
         lua_setfield(L, -2, "Pause");
         lua_pushcfunction(L, CE_Audio_Music_Resume);
