@@ -67,6 +67,7 @@ namespace CE::Lua {
         CE::Lua::Functions::Assets::Fonts::Register(L);
         CE::Lua::Functions::Time::Register(L);
         CE::Lua::Functions::Misc::Register(L);
+        CE::Lua::Functions::Data::Register(L);
         
     }
 

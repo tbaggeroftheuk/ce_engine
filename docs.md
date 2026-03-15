@@ -1,4 +1,16 @@
 # Lua Docs
+To update every frame in you lua file do:
+```lua
+function update()
+
+end
+```
+Also put draw code there.
+
+You can use Color like this:
+```lua
+local RED = Color(255, 0, 0)
+```
 
 ## "CE.*" 
 
@@ -84,9 +96,6 @@ Returns true if a key is not being pressed
 
 ### "OpenUrl("https://example.com")
 Returns nothing
-
-
-
 
 ## "Time.*"
 
@@ -233,3 +242,26 @@ Unload a music stream
 #### "UnloadAll()"
 Unload all SFX's
 
+
+## "Draw."
+
+### "Clear(Color(0, 0, 0))
+This clears the background and sets it to black
+
+### "Rect(50, 50, 200, 100, Color(0, 0, 0))"
+This draws a rectangle at X 50, Y 50, Width 200, Height 100. 
+Default Color is WHITE
+
+### "Circle(300, 300, 50, Color(255, 0, 0))
+This draws a circle at 300, 300, with a radius of 50.
+Default Color is WHITE
+
+### "Line(10, 20, 100, 200, Color(255,0,0))"
+The first 2 args is start posX and PosY, the next 2 is end PosX and PosY.
+Default Color is WHITE
+
+
+## "Data.*"
+
+### "GetFile("foo.txt")
+Tries to open a file in the game data dir, returns a string.

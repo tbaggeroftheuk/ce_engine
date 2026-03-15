@@ -60,3 +60,7 @@ namespace CE::Lua::Functions::Time {
 namespace CE::Lua::Functions::Misc {
     void Register(lua_State* L);
 }
+
+namespace CE::Lua::Functions::Data {
+    void Register(lua_State* L);
+}
