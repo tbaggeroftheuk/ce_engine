@@ -21,7 +21,7 @@ Returns the game name as a string
 Returns the game version as a string
 
 ### ```IsDebugOn()```
-Returns if debug is 
+Returns true if debug is 
 
 ### ```Shutdown()```
 Shuts down the game
