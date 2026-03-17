@@ -64,3 +64,7 @@ namespace CE::Lua::Functions::Misc {
 namespace CE::Lua::Functions::Data {
     void Register(lua_State* L);
 }
+
+namespace CE::Lua::Functions::Callbacks {
+    void Register(lua_State* L);
+}

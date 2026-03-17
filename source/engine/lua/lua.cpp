@@ -68,6 +68,7 @@ namespace CE::Lua {
         CE::Lua::Functions::Time::Register(L);
         CE::Lua::Functions::Misc::Register(L);
         CE::Lua::Functions::Data::Register(L);
+        CE::Lua::Functions::Callbacks::Register(L);
         
     }
 

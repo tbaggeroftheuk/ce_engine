@@ -1,7 +1,7 @@
 # Lua Docs
 To update every frame in you lua file do:
 ```lua
-function update()
+function Update()
 
 end
 ```
@@ -25,6 +25,12 @@ Returns true if debug is
 
 ### ```Shutdown()```
 Shuts down the game
+
+### ```SetGameState(name)```
+Sets the current game state string (used by callbacks)
+
+### ```GetGameState()```
+Returns the current game state string
 
 ## "Mouse.*"
 
@@ -80,7 +86,7 @@ GRAVE, BACKTICK
 ### "IsKeyPressed("A")"
 Returns true if pressed once
 
-### "IsKeyPressedPressedRepeat("A")"
+### "IsKeyPressedRepeat("A")"
 Returns true if a key has been pressed again
 
 ### "IsKeyDown("A")"
@@ -218,30 +224,41 @@ Pause a music stream
 #### "Resume("bgm")
 Resume a music stream
 
-#### "Stop("bgm")
-Stop a music stream
+## "Callbacks.*"
 
-#### "StopAll()"
-Stop all music streams
+Callbacks are a simple event system keyed by `(state, event)`.
 
-#### "PauseAll()"
-Pause all music streams
+The engine automatically emits:
+- `Enter` / `Exit` when `CE.SetGameState(...)` changes the state
+- `Update` and `Draw` every frame
+- a state-name event (e.g. `InGame`) right after `Enter`
 
-#### "ResumeAll()"
-Resume all music streams
+### `On(event, fn)` / `On(state, event, fn)`
+Registers a callback and returns an id. Your `fn` is called as `fn(state, event)`.
 
-#### "PlayAll()"
-Play all loaded music streams
+Examples:
+```lua
+Callbacks.On("Update", function(state, event) end)
+Callbacks.On("InGame", "Draw", function(state, event) end)
+Callbacks.On("InGame", function(state, event) end) -- state-name event
+```
 
-#### "SetLoop("bgm", 1.0, 5.0)
-Set a music loop, arg2 is loop start (in seconds), arg3 is loop end (in seconds)
+### `Once(...)`
+Like `On(...)` but auto-unregisters after the first call.
 
-#### "Unload("bgm")"
-Unload a music stream
+### `Off(id)`
+Unregister a single callback by id.
 
-#### "UnloadAll()"
-Unload all SFX's
+### `Emit(event)` / `Emit(state, event)`
+Manually trigger an event.
 
+### Convenience helpers
+```lua
+Callbacks.OnUpdate(fn)      -- or OnUpdate("InGame", fn)
+Callbacks.OnDraw(fn)
+Callbacks.OnEnter(fn)
+Callbacks.OnExit(fn)
+```
 
 ## "Draw."
 

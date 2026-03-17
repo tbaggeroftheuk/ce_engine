@@ -14,6 +14,7 @@ extern "C" {
 #include "globals.hpp"
 #include "engine/assets/assets.hpp"
 #include "common/MemoryUsage.hpp"
+#include "engine/callbacks.hpp"
 
 const char* GetGameStateName(CE::GameState state) {
     switch (state) {
@@ -98,7 +99,7 @@ void DebugUI() {
     ImGui::Begin("Cattle Debug");
 
     ImGui::Text("Current mousePos: x = %f, y = %f", CE::MousePos.x, CE::MousePos.y);
-    ImGui::Text("Current state: %s", GetGameStateName(CE::currentGameState));
+    ImGui::Text("Current state: %s", CE::Callbacks::GetGameState());
     ImGui::Spacing();
     ImGui::Text("Game name: %s", CE::game_name.c_str());
     ImGui::Text("Engine version string: %s", CE::engine_ver.c_str());

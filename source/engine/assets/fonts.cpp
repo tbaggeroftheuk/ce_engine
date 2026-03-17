@@ -47,7 +47,7 @@ namespace CE::Assets::Fonts {
             return;
         }
 
-        Font font_file = LoadFontEx(filePath.c_str(), size, NULL, NULL);
+        Font font_file = LoadFontEx(filePath.c_str(), size, nullptr, 0);
 
         if(!IsFontValid(font_file)) {
             TraceLog(LOG_WARNING, "CE-Fonts: Invalid font file: %s", path.c_str());

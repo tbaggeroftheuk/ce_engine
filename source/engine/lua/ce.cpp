@@ -34,6 +34,21 @@ int Shutdown_CE(lua_State* L) {
     return 0;
 }
 
+int SetGameState_CE(lua_State* L) {
+    const char* name = LCS(L, 1);
+    if (!name || !*name) {
+        CE::currentGameStateName = "None";
+        return 0;
+    }
+    CE::currentGameStateName = name;
+    return 0;
+}
+
+int GetGameState_CE(lua_State* L) {
+    lua_pushstring(L, CE::currentGameStateName.c_str());
+    return 1;
+}
+
 namespace CE::Lua::Functions::ce_functions {
     void Register(lua_State* L) {
         lua_newtable(L);
@@ -49,6 +64,12 @@ namespace CE::Lua::Functions::ce_functions {
 
         lua_pushcfunction(L, Shutdown_CE);
         lua_setfield(L, -2, "Shutdown");
+
+        lua_pushcfunction(L, SetGameState_CE);
+        lua_setfield(L, -2, "SetGameState");
+
+        lua_pushcfunction(L, GetGameState_CE);
+        lua_setfield(L, -2, "GetGameState");
 
         lua_setglobal(L, "CE");
     }

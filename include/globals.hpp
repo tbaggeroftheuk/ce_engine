@@ -55,6 +55,7 @@ namespace CE {
     };
 
     inline GameState currentGameState = GameState::None;
+    inline std::string currentGameStateName = "None";
 
 }
 
