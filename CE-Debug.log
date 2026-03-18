@@ -1,0 +1,126 @@
+INFO: CE-DEBUG: Debug Mode On
+INFO: CE: Debug is currently activated
+INFO: CE: Cattle engine: No BULLSHIT
+INFO: CE: Engine version: Build 0.1
+INFO: CE-Bootstrap: Game name and version: CE Runtime, Alpha build
+INFO: CE-Bootstrap: Data directory is C:\Users\robin\AppData\Local\CE Runtime\Cache
+INFO: CE-Bootstrap: Version from data: Alpha build
+INFO: CE-Bootstrap: Game data has been extracted!
+INFO: Initializing raylib 5.5
+INFO: Platform backend: DESKTOP (GLFW)
+INFO: Supported raylib modules:
+INFO:     > rcore:..... loaded (mandatory)
+INFO:     > rlgl:...... loaded (mandatory)
+INFO:     > rshapes:... loaded (optional)
+INFO:     > rtextures:. loaded (optional)
+INFO:     > rtext:..... loaded (optional)
+INFO:     > rmodels:... loaded (optional)
+INFO:     > raudio:.... loaded (optional)
+INFO: DISPLAY: Device initialized successfully
+INFO:     > Display size: 1920 x 1080
+INFO:     > Screen size:  1280 x 720
+INFO:     > Render size:  1280 x 720
+INFO:     > Viewport offsets: 0, 0
+INFO: GLAD: OpenGL extensions loaded successfully
+INFO: GL: Supported extensions count: 401
+INFO: GL: OpenGL device information:
+INFO:     > Vendor:   NVIDIA Corporation
+INFO:     > Renderer: NVIDIA GeForce RTX 2060 SUPER/PCIe/SSE2
+INFO:     > Version:  3.3.0 NVIDIA 591.44
+INFO:     > GLSL:     3.30 NVIDIA via Cg compiler
+INFO: GL: VAO extension detected, VAO functions loaded successfully
+INFO: GL: NPOT textures extension detected, full NPOT textures supported
+INFO: GL: DXT compressed textures supported
+INFO: GL: ETC2/EAC compressed textures supported
+INFO: PLATFORM: DESKTOP (GLFW - Win32): Initialized successfully
+INFO: TEXTURE: [ID 1] Texture loaded successfully (1x1 | R8G8B8A8 | 1 mipmaps)
+INFO: TEXTURE: [ID 1] Default texture loaded successfully
+INFO: SHADER: [ID 1] Vertex shader compiled successfully
+INFO: SHADER: [ID 2] Fragment shader compiled successfully
+INFO: SHADER: [ID 3] Program shader loaded successfully
+INFO: SHADER: [ID 3] Default shader loaded successfully
+INFO: RLGL: Render batch vertex buffers loaded successfully in RAM (CPU)
+INFO: RLGL: Render batch vertex buffers loaded successfully in VRAM (GPU)
+INFO: RLGL: Default OpenGL state initialized successfully
+INFO: TEXTURE: [ID 2] Texture loaded successfully (128x128 | GRAY_ALPHA | 1 mipmaps)
+INFO: FONT: Default font loaded successfully (224 glyphs)
+INFO: SYSTEM: Working Directory: E:\Coding\C\ce_engine
+INFO: FILEIO: [C:\Users\robin\AppData\Local\CE Runtime\Cache/common/icon.jpg] File loaded successfully
+INFO: IMAGE: Data loaded successfully (1104x1472 | R8G8B8 | 1 mipmaps)
+WARNING: GLFW: Window icon image must be in R8G8B8A8 pixel format
+INFO: TIMER: Target time per frame: 16.667 milliseconds
+INFO: TEXTURE: [ID 3] Texture loaded successfully (64x64 | R8G8B8A8 | 1 mipmaps)
+INFO: AUDIO: Device initialized successfully
+INFO:     > Backend:       miniaudio | WASAPI
+INFO:     > Format:        32-bit IEEE Floating Point -> 32-bit IEEE Floating Point
+INFO:     > Channels:      2 -> 2
+INFO:     > Sample rate:   48000 -> 48000
+INFO:     > Periods size:  1440
+INFO: CE-PluginLoader: Loading plugin: C:\Users\robin\AppData\Local\CE Runtime\Cache\plugins\TestPlugin.dll
+PLUGIN_INFO: The plugin has got the globals!
+INFO: CE-PluginLoader: Loaded plugin: VewyCoolPlugin
+
+INFO: Loaded plugins:
+INFO:     > VewyCoolPlugin
+INFO:         > Description: Does cool stuff
+INFO:         > Version: 1.0
+INFO:         > Capabilities: None
+INFO:         > Status: Loaded
+INFO:
+INFO: FILEIO: [C:\Users\robin\AppData\Local\CE Runtime\Cache/textures/player.jpg] File loaded successfully
+INFO: IMAGE: Data loaded successfully (50x50 | R8G8B8 | 1 mipmaps)
+INFO: TEXTURE: [ID 4] Texture loaded successfully (50x50 | R8G8B8 | 1 mipmaps)
+INFO: CE-Textures: Loaded texture from 'C:\Users\robin\AppData\Local\CE Runtime\Cache/textures/player.jpg'
+←[34mLUA_INFO: This is an info message←[0m
+←[36mLUA_DEBUG: This is a debug message←[0m
+←[33mLUA_WARNING: This is a warning message←[0m
+←[31mLUA_ERROR: This is an error message←[0m
+←[34mLUA_INFO: Textures←[0m
+←[34mLUA_INFO: next←[0m
+←[34mLUA_INFO: Mouse←[0m
+←[34mLUA_INFO: Color←[0m
+←[34mLUA_INFO: rawset←[0m
+←[34mLUA_INFO: require←[0m
+←[34mLUA_INFO: dofile←[0m
+←[34mLUA_INFO: pairs←[0m
+←[34mLUA_INFO: setmetatable←[0m
+←[34mLUA_INFO: Data←[0m
+←[34mLUA_INFO: xpcall←[0m
+←[34mLUA_INFO: table←[0m
+←[34mLUA_INFO: string←[0m
+←[34mLUA_INFO: type←[0m
+←[34mLUA_INFO: getmetatable←[0m
+←[34mLUA_INFO: collectgarbage←[0m
+←[34mLUA_INFO: Callbacks←[0m
+←[34mLUA_INFO: Misc←[0m
+←[34mLUA_INFO: Input←[0m
+←[34mLUA_INFO: ipairs←[0m
+←[34mLUA_INFO: rawequal←[0m
+←[34mLUA_INFO: pcall←[0m
+←[34mLUA_INFO: Text←[0m
+←[34mLUA_INFO: _VERSION←[0m
+←[34mLUA_INFO: package←[0m
+←[34mLUA_INFO: Fonts←[0m
+←[34mLUA_INFO: Vec2←[0m
+←[34mLUA_INFO: Log←[0m
+←[34mLUA_INFO: error←[0m
+←[34mLUA_INFO: _G←[0m
+←[34mLUA_INFO: Audio←[0m
+←[34mLUA_INFO: Time←[0m
+←[34mLUA_INFO: CE←[0m
+←[34mLUA_INFO: Draw←[0m
+←[34mLUA_INFO: loadfile←[0m
+←[34mLUA_INFO: math←[0m
+←[34mLUA_INFO: tonumber←[0m
+←[34mLUA_INFO: assert←[0m
+←[34mLUA_INFO: bit32←[0m
+←[34mLUA_INFO: Rect←[0m
+←[34mLUA_INFO: coroutine←[0m
+←[34mLUA_INFO: rawget←[0m
+←[34mLUA_INFO: tostring←[0m
+←[34mLUA_INFO: rawlen←[0m
+←[34mLUA_INFO: print←[0m
+←[34mLUA_INFO: select←[0m
+←[34mLUA_INFO: load←[0m
+INFO: CE-Main: Entering main loop
+INFO: TEXTURE: [ID 5] Texture loaded successfully (512x128 | R8G8B8A8 | 1 mipmaps)
