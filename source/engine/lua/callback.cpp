@@ -47,141 +47,85 @@ namespace {
     static std::unordered_map<int, std::pair<Key, int>> g_IdToKeyAndIndex; // id -> (key, index-in-vector)
     static int g_NextCallbackId = 1;
 
-    // --- Dynamic event dispatchers (C++ -> Lua bridge) ---
-    // We can't create new C function pointers at runtime, so we predefine a fixed
-    // set of thunks and assign event names to them as Lua requests.
-    static constexpr int kMaxEventThunks = 64;
-    static std::vector<std::string> g_ThunkEventNames;
-    static std::unordered_map<std::string, int> g_EventToThunkIndex;
-    static bool g_DispatchersRegistered = false;
-
     static std::string_view NormalizeState(const char* stateName) {
         if (!stateName || !*stateName) return "*";
         if (stateName[0] == '*' && stateName[1] == '\0') return "*";
         return stateName;
     }
 
-    static void CallList(std::string_view state, std::string_view event) {
+    static void UnregisterById(int id) {
+        auto it = g_IdToKeyAndIndex.find(id);
+        if (it == g_IdToKeyAndIndex.end()) return;
+
+        const Key key = it->second.first;
+        const int idx = it->second.second;
+
+        auto vit = g_LuaCallbacks.find(key);
+        if (vit == g_LuaCallbacks.end() || idx < 0 || idx >= (int)vit->second.size()) {
+            g_IdToKeyAndIndex.erase(it);
+            return;
+        }
+
+        const int ref = vit->second[(size_t)idx].ref;
+        luaL_unref(g_L, LUA_REGISTRYINDEX, ref);
+
+        const int lastIndex = (int)vit->second.size() - 1;
+        if (idx != lastIndex) {
+            vit->second[(size_t)idx] = vit->second[(size_t)lastIndex];
+            const int movedId = vit->second[(size_t)idx].id;
+            auto movedIt = g_IdToKeyAndIndex.find(movedId);
+            if (movedIt != g_IdToKeyAndIndex.end()) {
+                movedIt->second.second = idx;
+            }
+        }
+        vit->second.pop_back();
+        if (vit->second.empty()) g_LuaCallbacks.erase(vit);
+
+        g_IdToKeyAndIndex.erase(it);
+    }
+
+    static void CallList(std::string_view state, std::string_view event, float* dtOrNull) {
         if (!g_L) return;
 
         auto it = g_LuaCallbacks.find(Key{std::string(state), std::string(event)});
         if (it == g_LuaCallbacks.end()) return;
 
-        std::vector<int> removeIds;
+        std::vector<int> onceIds;
         for (const auto& rec : it->second) {
-            const int ref = rec.ref;
-            lua_rawgeti(g_L, LUA_REGISTRYINDEX, ref);
+            lua_rawgeti(g_L, LUA_REGISTRYINDEX, rec.ref);
             lua_pushstring(g_L, state.data());
             lua_pushstring(g_L, event.data());
+            if (dtOrNull) lua_pushnumber(g_L, (lua_Number)*dtOrNull);
+            else lua_pushnil(g_L);
 
-            if (lua_pcall(g_L, 2, 0, 0) != LUA_OK) {
+            if (lua_pcall(g_L, 3, 0, 0) != LUA_OK) {
                 const char* err = lua_tostring(g_L, -1);
                 TraceLog(LOG_ERROR, "CE-LuaCallbacks: %s callback error: %s", event.data(), err ? err : "<unknown>");
                 lua_pop(g_L, 1);
             }
 
-            if (rec.once) removeIds.push_back(rec.id);
+            if (rec.once) onceIds.push_back(rec.id);
         }
 
-        for (int id : removeIds) {
-            auto offIt = g_IdToKeyAndIndex.find(id);
-            if (offIt == g_IdToKeyAndIndex.end()) continue;
-
-            const Key key = offIt->second.first;
-            const int idx = offIt->second.second;
-
-            auto vit = g_LuaCallbacks.find(key);
-            if (vit == g_LuaCallbacks.end() || idx < 0 || idx >= (int)vit->second.size()) {
-                g_IdToKeyAndIndex.erase(offIt);
-                continue;
-            }
-
-            const int ref = vit->second[(size_t)idx].ref;
-            luaL_unref(g_L, LUA_REGISTRYINDEX, ref);
-
-            const int lastIndex = (int)vit->second.size() - 1;
-            if (idx != lastIndex) {
-                vit->second[(size_t)idx] = vit->second[(size_t)lastIndex];
-                const int movedId = vit->second[(size_t)idx].id;
-                auto movedIt = g_IdToKeyAndIndex.find(movedId);
-                if (movedIt != g_IdToKeyAndIndex.end()) {
-                    movedIt->second.second = idx;
-                }
-            }
-            vit->second.pop_back();
-            if (vit->second.empty()) g_LuaCallbacks.erase(vit);
-
-            g_IdToKeyAndIndex.erase(id);
-        }
+        for (int id : onceIds) UnregisterById(id);
     }
 
-    static void DispatchEvent(const char* eventName) {
-        const char* state = CE::Callbacks::GetGameState();
-        CallList("*", eventName);
-        if (state && *state) {
-            CallList(state, eventName);
-        }
-    }
-
-    static void DispatchThunkByIndex(int idx) {
-        if (idx < 0 || idx >= (int)g_ThunkEventNames.size()) return;
-        DispatchEvent(g_ThunkEventNames[(size_t)idx].c_str());
-    }
-
-#define CE_LUA_CB_THUNK(N) static void Thunk##N() { DispatchThunkByIndex(N); }
-    CE_LUA_CB_THUNK(0)  CE_LUA_CB_THUNK(1)  CE_LUA_CB_THUNK(2)  CE_LUA_CB_THUNK(3)
-    CE_LUA_CB_THUNK(4)  CE_LUA_CB_THUNK(5)  CE_LUA_CB_THUNK(6)  CE_LUA_CB_THUNK(7)
-    CE_LUA_CB_THUNK(8)  CE_LUA_CB_THUNK(9)  CE_LUA_CB_THUNK(10) CE_LUA_CB_THUNK(11)
-    CE_LUA_CB_THUNK(12) CE_LUA_CB_THUNK(13) CE_LUA_CB_THUNK(14) CE_LUA_CB_THUNK(15)
-    CE_LUA_CB_THUNK(16) CE_LUA_CB_THUNK(17) CE_LUA_CB_THUNK(18) CE_LUA_CB_THUNK(19)
-    CE_LUA_CB_THUNK(20) CE_LUA_CB_THUNK(21) CE_LUA_CB_THUNK(22) CE_LUA_CB_THUNK(23)
-    CE_LUA_CB_THUNK(24) CE_LUA_CB_THUNK(25) CE_LUA_CB_THUNK(26) CE_LUA_CB_THUNK(27)
-    CE_LUA_CB_THUNK(28) CE_LUA_CB_THUNK(29) CE_LUA_CB_THUNK(30) CE_LUA_CB_THUNK(31)
-    CE_LUA_CB_THUNK(32) CE_LUA_CB_THUNK(33) CE_LUA_CB_THUNK(34) CE_LUA_CB_THUNK(35)
-    CE_LUA_CB_THUNK(36) CE_LUA_CB_THUNK(37) CE_LUA_CB_THUNK(38) CE_LUA_CB_THUNK(39)
-    CE_LUA_CB_THUNK(40) CE_LUA_CB_THUNK(41) CE_LUA_CB_THUNK(42) CE_LUA_CB_THUNK(43)
-    CE_LUA_CB_THUNK(44) CE_LUA_CB_THUNK(45) CE_LUA_CB_THUNK(46) CE_LUA_CB_THUNK(47)
-    CE_LUA_CB_THUNK(48) CE_LUA_CB_THUNK(49) CE_LUA_CB_THUNK(50) CE_LUA_CB_THUNK(51)
-    CE_LUA_CB_THUNK(52) CE_LUA_CB_THUNK(53) CE_LUA_CB_THUNK(54) CE_LUA_CB_THUNK(55)
-    CE_LUA_CB_THUNK(56) CE_LUA_CB_THUNK(57) CE_LUA_CB_THUNK(58) CE_LUA_CB_THUNK(59)
-    CE_LUA_CB_THUNK(60) CE_LUA_CB_THUNK(61) CE_LUA_CB_THUNK(62) CE_LUA_CB_THUNK(63)
-#undef CE_LUA_CB_THUNK
-
-    using ThunkFn = void(*)();
-    static constexpr ThunkFn kThunkFns[kMaxEventThunks] = {
-        &Thunk0,  &Thunk1,  &Thunk2,  &Thunk3,  &Thunk4,  &Thunk5,  &Thunk6,  &Thunk7,
-        &Thunk8,  &Thunk9,  &Thunk10, &Thunk11, &Thunk12, &Thunk13, &Thunk14, &Thunk15,
-        &Thunk16, &Thunk17, &Thunk18, &Thunk19, &Thunk20, &Thunk21, &Thunk22, &Thunk23,
-        &Thunk24, &Thunk25, &Thunk26, &Thunk27, &Thunk28, &Thunk29, &Thunk30, &Thunk31,
-        &Thunk32, &Thunk33, &Thunk34, &Thunk35, &Thunk36, &Thunk37, &Thunk38, &Thunk39,
-        &Thunk40, &Thunk41, &Thunk42, &Thunk43, &Thunk44, &Thunk45, &Thunk46, &Thunk47,
-        &Thunk48, &Thunk49, &Thunk50, &Thunk51, &Thunk52, &Thunk53, &Thunk54, &Thunk55,
-        &Thunk56, &Thunk57, &Thunk58, &Thunk59, &Thunk60, &Thunk61, &Thunk62, &Thunk63,
-    };
-
-    static void EnsureDispatcherForEvent(std::string_view eventName) {
-        if (!g_DispatchersRegistered) {
-            g_DispatchersRegistered = true;
-            g_ThunkEventNames.reserve(kMaxEventThunks);
+    static void DispatchFromEngine(const std::string& event, void* data) {
+        float* dt = nullptr;
+        float dtValue = 0.0f;
+        if (data && event == "Update") {
+            dtValue = *(float*)data;
+            dt = &dtValue;
         }
 
-        if (eventName.empty()) return;
-        auto it = g_EventToThunkIndex.find(std::string(eventName));
-        if (it != g_EventToThunkIndex.end()) return;
+        const char* state = CE::Callbacks::GetState();
+        const std::string_view stateView = (state && *state) ? std::string_view(state) : std::string_view("None");
 
-        if ((int)g_ThunkEventNames.size() >= kMaxEventThunks) {
-            TraceLog(LOG_ERROR, "CE-LuaCallbacks: out of event thunk slots (max %d).", kMaxEventThunks);
-            return;
-        }
-
-        const int idx = (int)g_ThunkEventNames.size();
-        g_ThunkEventNames.emplace_back(eventName);
-        g_EventToThunkIndex.emplace(g_ThunkEventNames.back(), idx);
-
-        CE::Callbacks::Register("*", g_ThunkEventNames.back().c_str(), kThunkFns[idx]);
+        CallList("*", event, dt);
+        CallList(stateView, event, dt);
     }
 
-    static int Lua_Callbacks_On_Internal(lua_State* L, bool once) {
+    static int Lua_Callbacks_OnInternal(lua_State* L, bool once) {
         const int argc = lua_gettop(L);
 
         const char* stateName = "*";
@@ -199,16 +143,14 @@ namespace {
             return luaL_error(L, "Callbacks.On expects (event, fn) or (state, event, fn)");
         }
 
-        std::string_view eventView(eventName ? eventName : "");
-        EnsureDispatcherForEvent(eventView);
-
         luaL_checktype(L, fnIndex, LUA_TFUNCTION);
         lua_pushvalue(L, fnIndex);
-        int ref = luaL_ref(L, LUA_REGISTRYINDEX);
+        const int ref = luaL_ref(L, LUA_REGISTRYINDEX);
 
         std::string_view stateView = NormalizeState(stateName);
-        Key key{std::string(stateView), std::string(eventView)};
+        std::string_view eventView = eventName ? std::string_view(eventName) : std::string_view("");
 
+        Key key{std::string(stateView), std::string(eventView)};
         const int id = g_NextCallbackId++;
         auto& vec = g_LuaCallbacks[key];
         vec.push_back(CallbackRec{ .id = id, .ref = ref, .once = once });
@@ -218,12 +160,54 @@ namespace {
         return 1;
     }
 
-    static int Lua_Callbacks_On(lua_State* L) {
-        return Lua_Callbacks_On_Internal(L, false);
+    static int Lua_Callbacks_On(lua_State* L) { return Lua_Callbacks_OnInternal(L, false); }
+    static int Lua_Callbacks_Once(lua_State* L) { return Lua_Callbacks_OnInternal(L, true); }
+
+    static int Lua_Callbacks_Off(lua_State* L) {
+        const int id = (int)luaL_checkinteger(L, 1);
+        const bool exists = (g_IdToKeyAndIndex.find(id) != g_IdToKeyAndIndex.end());
+        if (exists) UnregisterById(id);
+        lua_pushboolean(L, exists ? 1 : 0);
+        return 1;
     }
 
-    static int Lua_Callbacks_Once(lua_State* L) {
-        return Lua_Callbacks_On_Internal(L, true);
+    static int Lua_Callbacks_Clear(lua_State* L) {
+        (void)L;
+        if (!g_L) return 0;
+
+        for (auto& [key, refs] : g_LuaCallbacks) {
+            for (const auto& rec : refs) {
+                luaL_unref(g_L, LUA_REGISTRYINDEX, rec.ref);
+            }
+        }
+        g_LuaCallbacks.clear();
+        g_IdToKeyAndIndex.clear();
+        return 0;
+    }
+
+    static int Lua_Callbacks_Emit(lua_State* L) {
+        const int argc = lua_gettop(L);
+        const char* event = luaL_checkstring(L, 1);
+
+        if (argc >= 2 && lua_isnumber(L, 2)) {
+            float temp = (float)lua_tonumber(L, 2);
+            CE::Callbacks::Emit(std::string(event), &temp);
+            return 0;
+        }
+
+        CE::Callbacks::Emit(std::string(event), nullptr);
+        return 0;
+    }
+
+    static int Lua_Callbacks_GetState(lua_State* L) {
+        lua_pushstring(L, CE::Callbacks::GetState());
+        return 1;
+    }
+
+    static int Lua_Callbacks_SetState(lua_State* L) {
+        const char* state = luaL_checkstring(L, 1);
+        CE::Callbacks::SetState(std::string(state));
+        return 0;
     }
 
     static int Lua_Callbacks_OnEvent(lua_State* L, const char* eventName, bool once) {
@@ -240,8 +224,6 @@ namespace {
         } else {
             return luaL_error(L, "Expected (fn) or (state, fn)");
         }
-
-        EnsureDispatcherForEvent(eventName);
 
         luaL_checktype(L, fnIndex, LUA_TFUNCTION);
         lua_pushvalue(L, fnIndex);
@@ -268,115 +250,33 @@ namespace {
     static int Lua_Callbacks_OnceDraw(lua_State* L) { return Lua_Callbacks_OnEvent(L, "Draw", true); }
     static int Lua_Callbacks_OnceEnter(lua_State* L) { return Lua_Callbacks_OnEvent(L, "Enter", true); }
     static int Lua_Callbacks_OnceExit(lua_State* L) { return Lua_Callbacks_OnEvent(L, "Exit", true); }
-
-    static int Lua_Callbacks_Off(lua_State* L) {
-        const int id = (int)luaL_checkinteger(L, 1);
-        auto it = g_IdToKeyAndIndex.find(id);
-        if (it == g_IdToKeyAndIndex.end()) {
-            lua_pushboolean(L, 0);
-            return 1;
-        }
-
-        const Key key = it->second.first;
-        const int idx = it->second.second;
-
-        auto vit = g_LuaCallbacks.find(key);
-        if (vit == g_LuaCallbacks.end() || idx < 0 || idx >= (int)vit->second.size()) {
-            g_IdToKeyAndIndex.erase(it);
-            lua_pushboolean(L, 0);
-            return 1;
-        }
-
-        const int ref = vit->second[(size_t)idx].ref;
-        luaL_unref(L, LUA_REGISTRYINDEX, ref);
-
-        // Remove by swap-delete and fix index map for the moved record.
-        const int lastIndex = (int)vit->second.size() - 1;
-        if (idx != lastIndex) {
-            vit->second[(size_t)idx] = vit->second[(size_t)lastIndex];
-            const int movedId = vit->second[(size_t)idx].id;
-            auto movedIt = g_IdToKeyAndIndex.find(movedId);
-            if (movedIt != g_IdToKeyAndIndex.end()) {
-                movedIt->second.second = idx;
-            }
-        }
-        vit->second.pop_back();
-        if (vit->second.empty()) g_LuaCallbacks.erase(vit);
-
-        g_IdToKeyAndIndex.erase(it);
-        lua_pushboolean(L, 1);
-        return 1;
-    }
-
-    static int Lua_Callbacks_Clear(lua_State* L) {
-        (void)L;
-        if (!g_L) return 0;
-
-        for (auto& [key, refs] : g_LuaCallbacks) {
-            for (const auto& rec : refs) {
-                luaL_unref(g_L, LUA_REGISTRYINDEX, rec.ref);
-            }
-        }
-        g_LuaCallbacks.clear();
-        g_IdToKeyAndIndex.clear();
-        return 0;
-    }
-
-    static int Lua_Callbacks_Emit(lua_State* L) {
-        const int argc = lua_gettop(L);
-        if (argc == 1) {
-            const char* eventName = luaL_checkstring(L, 1);
-            EnsureDispatcherForEvent(eventName);
-            CE::Callbacks::Emit(eventName, nullptr);
-            return 0;
-        }
-        if (argc == 2) {
-            const char* stateName = luaL_checkstring(L, 1);
-            const char* eventName = luaL_checkstring(L, 2);
-            EnsureDispatcherForEvent(eventName);
-            CE::Callbacks::Emit(stateName, eventName, nullptr);
-            return 0;
-        }
-        return luaL_error(L, "Callbacks.Emit expects (event) or (state, event)");
-    }
-
-    static int Lua_Callbacks_GetState(lua_State* L) {
-        const char* state = CE::Callbacks::GetGameState();
-        lua_pushstring(L, state ? state : "None");
-        return 1;
-    }
 }
 
 namespace CE::Lua::Functions::Callbacks {
     void Register(lua_State* L) {
         g_L = L;
-        // Reserve the built-in engine events.
-        EnsureDispatcherForEvent("Update");
-        EnsureDispatcherForEvent("Draw");
-        EnsureDispatcherForEvent("Enter");
-        EnsureDispatcherForEvent("Exit");
+
+        CE::Callbacks::SetLuaDispatcher([](const std::string& event, void* data) {
+            DispatchFromEngine(event, data);
+        });
 
         lua_newtable(L); // Callbacks table
 
         lua_pushcfunction(L, Lua_Callbacks_On);
         lua_setfield(L, -2, "On");
-
         lua_pushcfunction(L, Lua_Callbacks_Once);
         lua_setfield(L, -2, "Once");
-
         lua_pushcfunction(L, Lua_Callbacks_Off);
         lua_setfield(L, -2, "Off");
-
         lua_pushcfunction(L, Lua_Callbacks_Clear);
         lua_setfield(L, -2, "Clear");
-
         lua_pushcfunction(L, Lua_Callbacks_Emit);
         lua_setfield(L, -2, "Emit");
-
         lua_pushcfunction(L, Lua_Callbacks_GetState);
         lua_setfield(L, -2, "GetState");
+        lua_pushcfunction(L, Lua_Callbacks_SetState);
+        lua_setfield(L, -2, "SetState");
 
-        // Convenience helpers
         lua_pushcfunction(L, Lua_Callbacks_OnUpdate);
         lua_setfield(L, -2, "OnUpdate");
         lua_pushcfunction(L, Lua_Callbacks_OnDraw);
@@ -395,7 +295,7 @@ namespace CE::Lua::Functions::Callbacks {
         lua_pushcfunction(L, Lua_Callbacks_OnceExit);
         lua_setfield(L, -2, "OnceExit");
 
-        // Lowercase aliases (more Lua-y)
+        // Lowercase aliases
         lua_getfield(L, -1, "On");
         lua_setfield(L, -2, "on");
         lua_getfield(L, -1, "Once");

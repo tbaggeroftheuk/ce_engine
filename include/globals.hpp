@@ -12,6 +12,7 @@ extern "C" {
 namespace CE {
     // General stuff
     inline Vector2 MousePos;
+    inline bool isWinowOpen = true;
     inline std::string game_name = "CE Runtime 0.1";
     inline bool Debug = true;
     inline int should_exit = 0;

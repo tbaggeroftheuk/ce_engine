@@ -224,41 +224,8 @@ Pause a music stream
 #### "Resume("bgm")
 Resume a music stream
 
-## "Callbacks.*"
+## "Gamestate.*"
 
-Callbacks are a simple event system keyed by `(state, event)`.
-
-The engine automatically emits:
-- `Enter` / `Exit` when `CE.SetGameState(...)` changes the state
-- `Update` and `Draw` every frame
-- a state-name event (e.g. `InGame`) right after `Enter`
-
-### `On(event, fn)` / `On(state, event, fn)`
-Registers a callback and returns an id. Your `fn` is called as `fn(state, event)`.
-
-Examples:
-```lua
-Callbacks.On("Update", function(state, event) end)
-Callbacks.On("InGame", "Draw", function(state, event) end)
-Callbacks.On("InGame", function(state, event) end) -- state-name event
-```
-
-### `Once(...)`
-Like `On(...)` but auto-unregisters after the first call.
-
-### `Off(id)`
-Unregister a single callback by id.
-
-### `Emit(event)` / `Emit(state, event)`
-Manually trigger an event.
-
-### Convenience helpers
-```lua
-Callbacks.OnUpdate(fn)      -- or OnUpdate("InGame", fn)
-Callbacks.OnDraw(fn)
-Callbacks.OnEnter(fn)
-Callbacks.OnExit(fn)
-```
 
 ## "Draw."
 

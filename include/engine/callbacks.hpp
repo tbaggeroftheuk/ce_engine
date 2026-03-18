@@ -1,21 +1,19 @@
 #pragma once
 
 #include <cstdint>
+#include <string>
+#include <functional>
+#include <unordered_map>
 
 #include "globals.hpp"
 
 namespace CE::Callbacks {
-    using Callback0 = void(*)();
-    using Callback1 = void(*)(void*);
-
-    void SetGameState(const char* stateName);
-    void SetGameState(CE::GameState state);
-    const char* GetGameState();
-
-    void Register(const char* stateName, const char* eventName, Callback0 fn);
-    void Register(const char* stateName, const char* eventName, Callback1 fn);
-
-    void Emit(const char* eventName, void* data = nullptr);            
-    void Emit(const char* stateName, const char* eventName, void* data); 
-    void Clear();
+    using LuaDispatcher = std::function<void(const std::string& event, void* data)>;
+    
+    void SetLuaDispatcher(LuaDispatcher fn);
+    void Update(float dt);
+    void Draw();
+    void SetState(const std::string& new_state);
+    void Emit(const std::string& event, void* data = nullptr);
+    const char* GetState();
 }

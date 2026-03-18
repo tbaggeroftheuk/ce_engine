@@ -6,7 +6,7 @@
 #include <filesystem>
 #include <iostream>
 
-#include "common/errorbox/error_box.hpp" // This is to show an infobox for a critiqual error
+#include "engine/common/error_box.hpp" // This is to show an infobox for a critiqual error
 #include "engine/engine.hpp" // Get access to CE::Engine::Main()
 #include "common/console_link.hpp" // So we can hook imgui console up
 #include "engine/assets/assets.hpp" // to init the textures

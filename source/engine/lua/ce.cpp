@@ -5,6 +5,7 @@ extern "C" {
 }
 
 #include "engine/lua.hpp"
+#include "engine/callbacks.hpp"
 #include "globals.hpp"
 
 #define LCS luaL_checkstring
@@ -38,9 +39,11 @@ int SetGameState_CE(lua_State* L) {
     const char* name = LCS(L, 1);
     if (!name || !*name) {
         CE::currentGameStateName = "None";
+        CE::Callbacks::SetState(CE::currentGameStateName);
         return 0;
     }
     CE::currentGameStateName = name;
+    CE::Callbacks::SetState(CE::currentGameStateName);
     return 0;
 }
 

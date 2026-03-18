@@ -8,9 +8,10 @@ extern "C" {
     #include "lauxlib.h" 
     #include "lualib.h" 
 }
-
+#include "engine/common/error_box.hpp"
 #include "engine/lua.hpp"
 #include "globals.hpp"
+#include "engine/common.hpp"
 
 int g_luaUpdateRef = LUA_NOREF; // global reference to Update()
 
@@ -39,12 +40,11 @@ namespace CE::Lua {
         LuaRemoveTable(L, "debug");
         LuaRemoveTable(L, "io");
         LuaRemoveTable(L, "os");
-        LuaRemoveTable(L, "ffi");
-
-        lua_getglobal(L, "package");
+        LuaRemoveTable(L, "ffi"); 
 
         // Make it so you can only require from the CE::Global.data_path
-        std::string luaPath = CE::Global.data_path + "?.lua;" + CE::Global.data_path + "?/init.lua";
+        lua_getglobal(L, "package");   
+        std::string luaPath = CE::Global.data_path + "/?.lua;" + CE::Global.data_path + "?/init.lua";
         lua_pushstring(L, "path");        
         lua_pushstring(L, luaPath.c_str()); 
         lua_settable(L, -3);           
@@ -57,6 +57,45 @@ namespace CE::Lua {
         lua_pop(L, 1);
 
         lua_newtable(L);
+
+        lua_pushnil(L);
+        lua_setglobal(L, "dofile");
+
+        lua_pushnil(L);
+        lua_setglobal(L, "loadfile");
+
+        lua_pushcfunction(L, [](lua_State* L) -> int { // This mf is to sandbox dofile
+            const char* filename = luaL_checkstring(L, 1);
+            std::string fullPath = CE::Global.data_path + filename;
+
+            if (fullPath.find(CE::Global.data_path) != 0) {
+                return luaL_error(L, "Access denied");
+            }
+
+            if (luaL_loadfile(L, fullPath.c_str()) != LUA_OK) {
+                return lua_error(L);
+            }
+
+            return lua_pcall(L, 0, LUA_MULTRET, 0);
+        });
+        lua_setglobal(L, "dofile");
+
+        lua_pushcfunction(L, [](lua_State* L) -> int { // Also do sandbox loadfile
+            const char* filename = luaL_checkstring(L, 1);
+
+            std::string fullPath = CE::Global.data_path + filename;
+            if (fullPath.find(CE::Global.data_path) != 0) {
+                return luaL_error(L, "Access denied outside sandbox");
+            }
+            if (luaL_loadfile(L, fullPath.c_str()) != LUA_OK) {
+                return lua_error(L);
+            }
+
+            lua_newtable(L);            
+            lua_setupvalue(L, -2, 1);  
+            return lua_pcall(L, 0, LUA_MULTRET, 0);
+        });
+        lua_setglobal(L, "loadfile");
 
         CE::Lua::Functions::ExposeFunctions();
         CE::Lua::Functions::ce_functions::Register(L);
@@ -96,8 +135,23 @@ namespace CE::Lua {
         }
 
         if (status != LUA_OK) {
-            std::cerr << "LUA_ERROR: Runtime error: " << lua_tostring(L, -1) << "\n";
-            lua_pop(L, 1);
+            const char* lua_msg = lua_tostring(L, -1);
+            std::string lua_error = "LUA_ERROR: Runtime error: ";
+            if (lua_msg) {
+                lua_error += lua_msg;
+            } else {
+                lua_error += "(no message)";
+            }
+
+            for (char& c : lua_error) {
+                if (c == '"') c = '\'';
+                else if (c == '\n' || c == '\r') c = ' '; 
+                else if (c < 32 || c > 126) c = '?';
+            }
+            std::cerr << lua_error <<"\n";
+            ShowError("Scripting error, check logs!");  
+            lua_pop(L, 1); 
+            CE::Shutdown(2);
         }
     }
 

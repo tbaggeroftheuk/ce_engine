@@ -16,43 +16,27 @@ namespace CE::Engine {
     int Main() {
         TraceLog(LOG_INFO, "CE-Main: Entering main loop");
         rlImGuiSetup(true);
-
-        std::string lastState = CE::currentGameStateName;
-        if (lastState.empty()) lastState = "None";
-
-        CE::Callbacks::SetGameState(lastState.c_str());
-        CE::Callbacks::Emit("Enter");
-        CE::Callbacks::Emit(lastState.c_str());
-
+        
         while(!WindowShouldClose()) 
-        {   
-            if (CE::currentGameStateName.empty()) CE::currentGameStateName = "None";
-
-            if (CE::currentGameStateName != lastState) {
-                CE::Callbacks::SetGameState(lastState.c_str());
-                CE::Callbacks::Emit("Exit");
-
-                lastState = CE::currentGameStateName;
-                CE::Callbacks::SetGameState(lastState.c_str());
-                CE::Callbacks::Emit("Enter");
-                CE::Callbacks::Emit(lastState.c_str());
-            }
+        {  
+            float dt = GetFrameTime();
+            CE::Callbacks::Update(dt);
+            CE::Lua::LuaUpdate();
+            CE::Assets::Audio::UpdateMusic();
 
             BeginDrawing();
             ClearBackground(WHITE);
+
             CE::MousePos = GetMousePosition();
+            CE::Callbacks::Draw();
 
-            CE::Callbacks::SetGameState(CE::currentGameStateName.c_str());
-            CE::Callbacks::Emit("Update");
-            CE::Lua::LuaUpdate();
-            CE::Assets::Audio::UpdateMusic();
-            CE::Callbacks::Emit("Draw");
+            rlImGuiBegin();
 
-            rlImGuiBegin();  // start ImGui frame
             if(CE::Debug) {
                 DebugUI();
                 DebugConsole();
             }
+
             rlImGuiEnd(); 
 
             EndDrawing();

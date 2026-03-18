@@ -99,7 +99,7 @@ void DebugUI() {
     ImGui::Begin("Cattle Debug");
 
     ImGui::Text("Current mousePos: x = %f, y = %f", CE::MousePos.x, CE::MousePos.y);
-    ImGui::Text("Current state: %s", CE::Callbacks::GetGameState());
+    ImGui::Text("Current state: %s", CE::Callbacks::GetState());
     ImGui::Spacing();
     ImGui::Text("Game name: %s", CE::game_name.c_str());
     ImGui::Text("Engine version string: %s", CE::engine_ver.c_str());

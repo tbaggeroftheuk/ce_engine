@@ -3,5 +3,5 @@
 void printLicences();
 
 namespace CE {
-    void Shutdown();
+    void Shutdown(int returnVal = 0);
 }
