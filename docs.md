@@ -224,8 +224,18 @@ Pause a music stream
 #### "Resume("bgm")
 Resume a music stream
 
-## "Gamestate.*"
+## "Callbacks.*"
 
+Callbacks.On(state, event, fn)	Registers a callback fn for a given state and event. state can be "*" to match all states.
+Callbacks.Once(state, event, fn)	Same as On but the callback runs only once.
+Callbacks.Off(id)	Unregisters a callback by its ID.
+Callbacks.Clear()	Clears all callbacks.
+Callbacks.Emit(event, dt?)	Manually emit an event. Optionally pass a number dt (like delta time).
+Callbacks.GetState()	Returns the current state name as a string.
+Callbacks.SetState(state)	Changes the current state.
+Callbacks.OnUpdate(fn)	Shortcut for On("*", "Update", fn)
+Callbacks.OnceUpdate(fn)	Shortcut for Once("*", "Update", fn)
+Similarly: OnDraw, OnEnter, OnExit, OnceDraw, etc.	
 
 ## "Draw."
 
