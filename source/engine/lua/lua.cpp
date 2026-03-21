@@ -149,6 +149,7 @@ namespace CE::Lua {
                 else if (c < 32 || c > 126) c = '?';
             }
             std::cerr << lua_error <<"\n";
+            CloseWindow();
             ShowError("Scripting error, check logs!");  
             lua_pop(L, 1); 
             CE::Shutdown(2);

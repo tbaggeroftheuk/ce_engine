@@ -14,7 +14,13 @@ namespace CE {
     inline Vector2 MousePos;
     inline bool isWinowOpen = true;
     inline std::string game_name = "CE Runtime 0.1";
+
+    #ifdef NDEBUG
     inline bool Debug = true;
+    #else
+    inline bool Debug = false;
+    #endif
+
     inline int should_exit = 0;
     inline std::string DATA_FILE_NAME = CE_DATA_FILE_NAME;
 
@@ -64,4 +70,5 @@ namespace CE::Flags {
     inline bool show_plugin_logs = true;
     inline bool bypass_data_file_crc_crash = false;
     inline bool debug_win = false;
+    inline bool custom_data_path = false;
 }

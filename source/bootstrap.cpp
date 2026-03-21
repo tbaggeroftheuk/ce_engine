@@ -32,30 +32,47 @@ namespace CE {
             std::exit(1);
         }
 
-        uint8_t* data = nullptr;
-        uint32_t size = 0;
-
-        
-        int res = tcf_load_file(DATA_FILE_NAME.c_str(), "Gameinfo.txt", &data, &size);
-        if (res != TCF_OK) {
-            TraceLog(LOG_ERROR, "CE-Bootstrap: Failed to load Gameinfo.txt from game data. Error code: %i", res);
-            ShowError("CE-Bootstrap: Failed to load Gameinfo.txt from game data");
-            return;
-        }
         CE::Ini::IniFile ini;
         CE::Ini::ParseError err;
         CE::Ini::Options opts;
-        opts.allow_inline_comments = true;  
-        opts.allow_colon_delim = true;    
-        opts.allow_empty_values = true;   
+        opts.allow_inline_comments = true;
+        opts.allow_colon_delim = true;
+        opts.allow_empty_values = true;
 
-        bool ok = CE::Ini::parse_memory(data, size, ini, &err, opts);
-        if (!ok) {
-            std::cerr << "INI parse error at line " << err.line
-                    << ", column " << err.column
-                    << ": " << err.message << "\n";
-            tcf_free(data);
-            return;
+        bool ok = false;
+
+        if (CE::Flags::custom_data_path) {
+            // Load from disk
+            std::filesystem::path path = std::filesystem::path(CE::Global.data_path) / "Gameinfo.txt";
+            ok = CE::Ini::load_file(path, ini, &err, opts);
+            if (!ok) {
+                std::cerr << "INI parse/load error at line " << err.line
+                        << ", column " << err.column
+                        << ": " << err.message << "\n";
+                return;
+            }
+        } else {
+            // Load from tcf
+            uint8_t* data = nullptr;
+            uint32_t size = 0;
+
+            int res = tcf_load_file(DATA_FILE_NAME.c_str(), "Gameinfo.txt", &data, &size);
+            if (res != TCF_OK) {
+                TraceLog(LOG_ERROR, "CE-Bootstrap: Failed to load Gameinfo.txt from game data. Error code: %i", res);
+                ShowError("CE-Bootstrap: Failed to load Gameinfo.txt from game data");
+                return;
+            }
+
+            ok = CE::Ini::parse_memory(data, size, ini, &err, opts);
+
+            tcf_free(data); // free after parsing
+
+            if (!ok) {
+                std::cerr << "INI parse error at line " << err.line
+                        << ", column " << err.column
+                        << ": " << err.message << "\n";
+                return;
+            }
         }
 
         CE::game_name = ini.get_string("Gameinfo", "Game_Name", "ERROR MISSING STRING");
@@ -71,7 +88,7 @@ namespace CE {
 
 void SetupPaths() {
     namespace fs = std::filesystem;
-
+    if(!CE::Flags::custom_data_path) { // stop nuking a custom data path
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
     const char* CacheCstr = std::getenv("XDG_CACHE_HOME");
     const char* HomeCstr  = std::getenv("HOME");
@@ -103,8 +120,13 @@ void SetupPaths() {
     CE::Global.data_path =
         std::format("{}\\{}\\Cache", localAppData_cstr, CE::game_name);
 #endif
+    }
 
-    // --- Settings & save paths (modern C++) ---
+#if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
+    const char* HomeCstr  = std::getenv("HOME");
+#endif
+
+    // --- Settings & save paths 
 #if defined(__linux__) || defined(__FreeBSD__) || defined(__OpenBSD__) || defined(__NetBSD__)
     if (!HomeCstr) {
         TraceLog(LOG_ERROR, "CE: Can't find user home directory");
@@ -151,89 +173,91 @@ void SetupPaths() {
 }
 
     void ExtractGame(void) {
-        if (!DirectoryExists(CE::Global.data_path.c_str())) { // Check data path exists
-            if (MakeDirectory(CE::Global.data_path.c_str()) != 0) { // Try to make the directory, shows an error if it failed
-                TraceLog(LOG_FATAL, "CE-Bootstrap: Unable to create data directory");
-                ShowError("CE-Bootstrap: Unable to create data directory");
-            }
-
-            TraceLog(LOG_INFO, "CE-Bootstrap: Created data directory");
-        }
-        TraceLog(LOG_INFO, "CE-Bootstrap: Data directory is %s", CE::Global.data_path.c_str());
-
-
-        if (!FileExists(DATA_FILE_NAME.c_str())) {
-            TraceLog(LOG_FATAL, "CE-Bootstrap: Missing game data, please install it!");
-            ShowError("CE-Bootstrap: Missing game data, please install it!");
-        }
-
-        // Versioned extract as probs better then extracting every run
-        bool ExtractRequired = true;
-        std::string VerFileContents = "this_shouldnt_be_viewable";
-
-        std::string VerFilePath = std::format("{}/.version", CE::Global.data_path);
-
-        { // Forcing RAII to close the file
-            std::ifstream VerFile(VerFilePath);
-
-            if(!VerFile.is_open()) {
-                TraceLog(LOG_ERROR, "CE-Bootstrap: Couldn't open version file for read");
-                ExtractRequired = true;
-            }else if(!std::getline(VerFile, VerFileContents)) {
-                TraceLog(LOG_INFO, "CE-Bootstrap: Version file is empty");
-                ExtractRequired = true;
-            }
-
-        }
-
-        if (VerFileContents != CE::game_ver) ExtractRequired = true;
-
-        if (CE::Debug) ExtractRequired = true;
-
-        TraceLog(LOG_INFO, "CE-Bootstrap: Version from data: %s", VerFileContents.c_str());
-
-        if (ExtractRequired) {
-            int Tcf = tcf_extract(DATA_FILE_NAME.c_str(), CE::Global.data_path.c_str());
-            
-        switch (Tcf) {
-            case TCF_ERR_IO:
-                TraceLog(LOG_FATAL, "CE-Bootstrap: IO error\n");
-                ShowError("Error extracting game data");
-                std::exit(1);
-                break;
-
-            case TCF_ERR_CRC:
-                TraceLog(LOG_FATAL, "CE-Bootstrap: The TCF file has a CRC error\n");
-                if (CE::Flags::bypass_data_file_crc_crash) {
-                    ShowError("Game data may be corrupted, try reinstalling");
-                    std::exit(1);
+        if(!CE::Flags::custom_data_path) {
+            if (!DirectoryExists(CE::Global.data_path.c_str())) { // Check data path exists
+                if (MakeDirectory(CE::Global.data_path.c_str()) != 0) { // Try to make the directory, shows an error if it failed
+                    TraceLog(LOG_FATAL, "CE-Bootstrap: Unable to create data directory");
+                    ShowError("CE-Bootstrap: Unable to create data directory");
                 }
-                break;
 
-            case TCF_ERR_MEMORY:
-                TraceLog(LOG_FATAL, "CE-Bootstrap: A memory error occurred!\n");
-                ShowError("Internal engine error :(");
-                std::exit(1);
-                break;
-
-            case TCF_ERR_FORMAT:
-                TraceLog(LOG_FATAL,
-                        "CE-Bootstrap: The TCF file has a format error.\n"
-                        "Is it a TCF file?\n");
-                ShowError("Game data file may be corrupted, try reinstalling");
-                std::exit(1);
-                break;
-
-            default:
-                break;
-        }
-            std::ofstream VerFileOut(VerFilePath);
-            if(VerFileOut.is_open()) {
-                VerFileOut << CE::game_ver;
+                TraceLog(LOG_INFO, "CE-Bootstrap: Created data directory");
             }
+            TraceLog(LOG_INFO, "CE-Bootstrap: Data directory is %s", CE::Global.data_path.c_str());
+
+
+            if (!FileExists(DATA_FILE_NAME.c_str())) {
+                TraceLog(LOG_FATAL, "CE-Bootstrap: Missing game data, please install it!");
+                ShowError("CE-Bootstrap: Missing game data, please install it!");
+            }
+
+            // Versioned extract as probs better then extracting every run
+            bool ExtractRequired = true;
+            std::string VerFileContents = "this_shouldnt_be_viewable";
+
+            std::string VerFilePath = std::format("{}/.version", CE::Global.data_path);
+
+            { // Forcing RAII to close the file
+                std::ifstream VerFile(VerFilePath);
+
+                if(!VerFile.is_open()) {
+                    TraceLog(LOG_ERROR, "CE-Bootstrap: Couldn't open version file for read");
+                    ExtractRequired = true;
+                }else if(!std::getline(VerFile, VerFileContents)) {
+                    TraceLog(LOG_INFO, "CE-Bootstrap: Version file is empty");
+                    ExtractRequired = true;
+                }
+
+            }
+
+            if (VerFileContents != CE::game_ver) ExtractRequired = true;
+
+            if (CE::Debug) ExtractRequired = true;
+
+            TraceLog(LOG_INFO, "CE-Bootstrap: Version from data: %s", VerFileContents.c_str());
+
+            if (ExtractRequired) {
+                int Tcf = tcf_extract(DATA_FILE_NAME.c_str(), CE::Global.data_path.c_str());
+                
+            switch (Tcf) {
+                case TCF_ERR_IO:
+                    TraceLog(LOG_FATAL, "CE-Bootstrap: IO error\n");
+                    ShowError("Error extracting game data");
+                    std::exit(1);
+                    break;
+
+                case TCF_ERR_CRC:
+                    TraceLog(LOG_FATAL, "CE-Bootstrap: The TCF file has a CRC error\n");
+                    if (CE::Flags::bypass_data_file_crc_crash) {
+                        ShowError("Game data may be corrupted, try reinstalling");
+                        std::exit(1);
+                    }
+                    break;
+
+                case TCF_ERR_MEMORY:
+                    TraceLog(LOG_FATAL, "CE-Bootstrap: A memory error occurred!\n");
+                    ShowError("Internal engine error :(");
+                    std::exit(1);
+                    break;
+
+                case TCF_ERR_FORMAT:
+                    TraceLog(LOG_FATAL,
+                            "CE-Bootstrap: The TCF file has a format error.\n"
+                            "Is it a TCF file?\n");
+                    ShowError("Game data file may be corrupted, try reinstalling");
+                    std::exit(1);
+                    break;
+
+                default:
+                    break;
+            }
+                std::ofstream VerFileOut(VerFilePath);
+                if(VerFileOut.is_open()) {
+                    VerFileOut << CE::game_ver;
+                }
+            }
+            TraceLog(LOG_INFO, "CE-Bootstrap: Game data has been extracted!");
+            return;
         }
-        TraceLog(LOG_INFO, "CE-Bootstrap: Game data has been extracted!");
-        return;
     }
 
     void WindowInit() {
@@ -262,7 +286,7 @@ void SetupPaths() {
     }
 
     void Bootstrap(void) {
-        SetupGlobals();
+        SetupGlobals();     
         SetupPaths();
         ExtractGame();
         WindowInit();

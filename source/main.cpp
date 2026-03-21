@@ -67,10 +67,18 @@ int main(int argc, char *argv[]) {
     }
 
     // Handle custom data file
-    const std::string prefix = "--datafile=";
-    if (arg.rfind(prefix, 0) == 0) { // starts with "--datafile="
-        CE::DATA_FILE_NAME = arg.substr(prefix.size()); // everything after '='
+    const std::string dataprefix = "--datafile=";
+    if (arg.rfind(dataprefix, 0) == 0) { // starts with "--datafile="
+        CE::DATA_FILE_NAME = arg.substr(dataprefix.size()); // everything after '='
         TraceLog(LOG_INFO, "CE: Custom data file set: %s", CE::DATA_FILE_NAME.c_str());
+    }
+
+    // Handle custom data path
+    const std::string datapathprefix = "--datapath=";
+    if (arg.rfind(datapathprefix, 0) == 0) { // starts with "--datapath="
+        CE::Global.data_path = arg.substr(datapathprefix.size()); // everything after '='
+        CE::Flags::custom_data_path = true;
+        TraceLog(LOG_INFO, "CE: Custom data path set: %s", CE::Global.data_path.c_str());
     }
 
     }
