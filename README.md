@@ -1,7 +1,7 @@
 # Cattle Engine - NO BULLSHIT
 
 Cattle engine (abbreviated to CE), is a general 2D game engine currently using Raylib (shall be moving to SDL3).
-Its techincally possible to make a game in its current state, you use lua ([Docs for it](docs.md)).
+Its techincally possible to make a game in its current state, you use lua ([Docs for it](lua_docs.md)).
 
 ## Example of a lua game
 ```lua
@@ -28,7 +28,7 @@ function PlayerUpdate(dt)
     Textures.Draw("player", playerPosX, playerPosY)
 end
 
-function Update() -- Called every frame
+Callbacks.OnUpdate(function(dt) -- Called every frame in all states
     Text.Draw("Press A to set game state to change gamestate to InGame,", 20, 05, 100, Color(0, 0, 0))
     Text.Draw("S to set it to Main_Menu", 20, 5, 120, Color(0, 0, 0))
 
@@ -42,6 +42,7 @@ function Update() -- Called every frame
 
     Text.Draw("Current state: ", 20, 5, 160, Color(0, 0, 0))
 end
+)
 
 Callbacks.On("InGame", "Draw", function(state, event) -- This runs when the game state is in 'InGame' every frame
   Text.Draw("Ingame", 20, 165, 160, Color(0,0,0,255))
@@ -58,7 +59,7 @@ end)
 - [X] Core stuff
 - [x] Lua API
 - [X] Make game state more modular
-- [ ] Make lua api more Consistent
+- [ ] Make lua api more consistent
 - [ ] Make the plugin api
 - [ ] Make a VFS (Virtual file system, in memory)
 - [ ] Data & texture/audio compression

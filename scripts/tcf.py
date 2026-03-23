@@ -8,14 +8,18 @@ from pathlib import Path
 # Constants
 # -----------------------------
 MAGIC = b"TCF"
-VERSION = 1
+VERSION = 2
 ENDIANNESS = b"\x00"
+FLAGS = 0
+
+HEADER_SIZE = 64
 EOF_MARKER = b"EOF"
+
 BUFFER_SIZE = 64 * 1024
 SHIFT_BITS = 2
 
 # -----------------------------
-# Lookup tables for fast shift/unshift
+# Lookup tables
 # -----------------------------
 SHIFT_TABLE = bytes(((i << SHIFT_BITS) & 0xFF) | (i >> (8 - SHIFT_BITS)) for i in range(256))
 UNSHIFT_TABLE = bytes(((i >> SHIFT_BITS) & 0xFF) | ((i << (8 - SHIFT_BITS)) & 0xFF) for i in range(256))
@@ -27,49 +31,46 @@ def unshift_data(data: bytes) -> bytes:
     return data.translate(UNSHIFT_TABLE)
 
 # -----------------------------
-# Packing
+# Pack
 # -----------------------------
 def pack_tcf(folder: str, output_path: str) -> None:
     folder_path = Path(folder)
+
     if not folder_path.exists() or not folder_path.is_dir():
         raise ValueError("Invalid input folder")
 
-    files_data = []
-    total_original_size = 0
+    files = []
+    total_size = 0
 
-    for file_path in folder_path.rglob("*"):
-        if file_path.is_file():
-            rel_path = str(file_path.relative_to(folder_path)).replace("\\", "/")
-            size = file_path.stat().st_size
-            total_original_size += size
-            files_data.append((rel_path, file_path, size))
+    for f in folder_path.rglob("*"):
+        if f.is_file():
+            rel = str(f.relative_to(folder_path)).replace("\\", "/")
+            size = f.stat().st_size
+            total_size += size
+            files.append((rel, f, size))
 
-    if not files_data:
-        raise ValueError("No files found to pack")
+    if not files:
+        raise ValueError("No files to pack")
 
-    files_data.sort(key=lambda x: x[2])  # optional: sort by size
-
-    output_path = Path(output_path)
-    if output_path.suffix.lower() != ".tcf":
-        output_path = output_path.with_suffix(".tcf")
+    files.sort(key=lambda x: x[2])
 
     with open(output_path, "wb", buffering=BUFFER_SIZE) as out:
-        # Reserve header space
-        out.write(b"\x00" * (len(MAGIC) + 2 + 1 + 4 + 4 + 4))
-        out.flush()
+        # Reserve header
+        out.write(b"\x00" * HEADER_SIZE)
 
         offsets = []
         sizes = []
         paths = []
+
         current_offset = 0
 
         # Write payload
-        for path, file_path, size in files_data:
+        for path, fpath, size in files:
             paths.append(path)
             offsets.append(current_offset)
             sizes.append(size)
 
-            with open(file_path, "rb", buffering=BUFFER_SIZE) as f:
+            with open(fpath, "rb") as f:
                 while chunk := f.read(BUFFER_SIZE):
                     out.write(shift_data(chunk))
 
@@ -79,116 +80,132 @@ def pack_tcf(folder: str, output_path: str) -> None:
 
         # Write index
         for path, offset, size in zip(paths, offsets, sizes):
-            path_bytes = path.encode("utf-8")
-            out.write(struct.pack("<H", len(path_bytes)))
-            out.write(path_bytes)
-            out.write(struct.pack("<I", offset))
-            out.write(struct.pack("<I", size))
+            pb = path.encode("utf-8")
+
+            out.write(struct.pack("<H", len(pb)))
+            out.write(pb)
+            out.write(struct.pack("<Q", offset))
+            out.write(struct.pack("<Q", size))
 
         out.write(EOF_MARKER)
 
-        # Write header + CRC
-        out.seek(0)
-        header_no_crc = (
-            MAGIC +
-            struct.pack("<H", VERSION) +
-            ENDIANNESS +
-            struct.pack("<I", payload_end) +
-            struct.pack("<I", len(files_data))
-        )
-        crc = zlib.crc32(header_no_crc) & 0xFFFFFFFF
-        out.write(header_no_crc)
-        out.write(struct.pack("<I", crc))
+        index_offset = payload_end
 
-    print(f"Packed {len(files_data)} files")
-    print(f"Original size: {total_original_size} bytes")
+        # -----------------------------
+        # Build header (64 bytes)
+        # -----------------------------
+        header = bytearray(HEADER_SIZE)
+
+        header[0:3] = MAGIC
+        header[3] = VERSION
+        header[4] = ENDIANNESS[0]
+        header[5] = FLAGS
+
+        # 6-7 reserved
+
+        struct.pack_into("<Q", header, 8, index_offset)
+        struct.pack_into("<Q", header, 16, len(files))
+        struct.pack_into("<Q", header, 24, HEADER_SIZE)
+
+        # Remaining space reserved (future use)
+
+        crc = zlib.crc32(header[:56]) & 0xFFFFFFFF
+        struct.pack_into("<I", header, 56, crc)
+
+        # Write header
+        out.seek(0)
+        out.write(header)
+
+    print(f"Packed {len(files)} files")
+    print(f"Original size: {total_size} bytes")
     print(f"TCF size: {os.path.getsize(output_path)} bytes")
 
 # -----------------------------
-# Unpacking
+# Unpack
 # -----------------------------
 def unpack_tcf(tcf_path: str, output_folder: str) -> None:
     with open(tcf_path, "rb") as f:
         data = f.read()
 
-    pos = 0
-    if data[pos:pos+3] != MAGIC:
+    if data[0:3] != MAGIC:
         raise ValueError("Invalid magic")
-    pos += 3
 
-    version = struct.unpack("<H", data[pos:pos+2])[0]
-    pos += 2
-    pos += 1  # endianness byte
+    version = data[3]
+    if version != 2:
+        raise ValueError("Unsupported version")
 
-    index_offset = struct.unpack("<I", data[pos:pos+4])[0]
-    pos += 4
-    file_count = struct.unpack("<I", data[pos:pos+4])[0]
-    pos += 4
+    index_offset = struct.unpack_from("<Q", data, 8)[0]
+    file_count = struct.unpack_from("<Q", data, 16)[0]
+    data_offset = struct.unpack_from("<Q", data, 24)[0]
 
-    header_no_crc = data[:pos]
-    crc_expected = struct.unpack("<I", data[pos:pos+4])[0]
-    pos += 4
-
-    if zlib.crc32(header_no_crc) & 0xFFFFFFFF != crc_expected:
+    crc_expected = struct.unpack_from("<I", data, 56)[0]
+    if zlib.crc32(data[:56]) & 0xFFFFFFFF != crc_expected:
         raise ValueError("CRC mismatch")
 
-    payload = data[pos:index_offset]
+    payload = data[data_offset:index_offset]
 
-    index_pos = index_offset
+    pos = index_offset
     entries = []
+
     for _ in range(file_count):
-        l = struct.unpack("<H", data[index_pos:index_pos+2])[0]
-        index_pos += 2
-        path = data[index_pos:index_pos+l].decode("utf-8")
-        index_pos += l
-        offset = struct.unpack("<I", data[index_pos:index_pos+4])[0]
-        index_pos += 4
-        size = struct.unpack("<I", data[index_pos:index_pos+4])[0]
-        index_pos += 4
+        path_len = struct.unpack_from("<H", data, pos)[0]
+        pos += 2
+
+        path = data[pos:pos+path_len].decode("utf-8")
+        pos += path_len
+
+        offset = struct.unpack_from("<Q", data, pos)[0]
+        pos += 8
+
+        size = struct.unpack_from("<Q", data, pos)[0]
+        pos += 8
+
         entries.append((path, offset, size))
 
-    out_root = Path(output_folder)
-    out_root.mkdir(parents=True, exist_ok=True)
+    root = Path(output_folder)
+    root.mkdir(parents=True, exist_ok=True)
 
     for path, offset, size in entries:
-        out_path = out_root / path
+        out_path = root / path
         out_path.parent.mkdir(parents=True, exist_ok=True)
+
         raw = payload[offset:offset+size]
+
         with open(out_path, "wb") as f:
             f.write(unshift_data(raw))
 
     print(f"Extracted {len(entries)} files")
 
 # -----------------------------
-# View obfuscated bytes
+# View raw vs decoded
 # -----------------------------
 def view_obfuscated(tcf_path: str, file_index: int = 0, num_bytes: int = 100) -> None:
     with open(tcf_path, "rb") as f:
         data = f.read()
 
-    pos = 0
-    if data[pos:pos+3] != MAGIC:
+    if data[0:3] != MAGIC:
         raise ValueError("Invalid magic")
-    pos += 3
-    pos += 2
-    pos += 1
-    index_offset = struct.unpack("<I", data[pos:pos+4])[0]
-    pos += 4
-    file_count = struct.unpack("<I", data[pos:pos+4])[0]
-    pos += 4
-    pos += 4  # skip CRC
 
-    index_pos = index_offset
+    index_offset = struct.unpack_from("<Q", data, 8)[0]
+    file_count = struct.unpack_from("<Q", data, 16)[0]
+    data_offset = struct.unpack_from("<Q", data, 24)[0]
+
+    pos = index_offset
     entries = []
+
     for _ in range(file_count):
-        l = struct.unpack("<H", data[index_pos:index_pos+2])[0]
-        index_pos += 2
-        path = data[index_pos:index_pos+l].decode("utf-8")
-        index_pos += l
-        offset = struct.unpack("<I", data[index_pos:index_pos+4])[0]
-        index_pos += 4
-        size = struct.unpack("<I", data[index_pos:index_pos+4])[0]
-        index_pos += 4
+        l = struct.unpack_from("<H", data, pos)[0]
+        pos += 2
+
+        path = data[pos:pos+l].decode()
+        pos += l
+
+        offset = struct.unpack_from("<Q", data, pos)[0]
+        pos += 8
+
+        size = struct.unpack_from("<Q", data, pos)[0]
+        pos += 8
+
         entries.append((path, offset, size))
 
     if file_index >= len(entries):
@@ -196,15 +213,15 @@ def view_obfuscated(tcf_path: str, file_index: int = 0, num_bytes: int = 100) ->
         return
 
     path, offset, size = entries[file_index]
-    payload_start = 18
-    chunk = data[payload_start + offset:payload_start + offset + min(num_bytes, size)]
+
+    chunk = data[data_offset + offset : data_offset + offset + min(num_bytes, size)]
 
     print(path)
     print("Obfuscated:", chunk.hex())
     print("Unshifted :", unshift_data(chunk).hex())
 
 # -----------------------------
-# Command-line interface
+# CLI
 # -----------------------------
 if __name__ == "__main__":
     if len(sys.argv) < 4:

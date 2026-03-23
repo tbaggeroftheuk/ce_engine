@@ -21,7 +21,6 @@ namespace CE::Engine {
         {  
             float dt = GetFrameTime();
             CE::Callbacks::Update(dt);
-            CE::Lua::LuaUpdate();
             CE::Assets::Audio::UpdateMusic();
 
             BeginDrawing();

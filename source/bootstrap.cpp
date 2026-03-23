@@ -5,6 +5,7 @@
 #include <fstream>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 
 #include "engine/common/error_box.hpp" // This is to show an infobox for a critiqual error
 #include "engine/engine.hpp" // Get access to CE::Engine::Main()
@@ -54,7 +55,7 @@ namespace CE {
         } else {
             // Load from tcf
             uint8_t* data = nullptr;
-            uint32_t size = 0;
+            uint64_t size = 0;
 
             int res = tcf_load_file(DATA_FILE_NAME.c_str(), "Gameinfo.txt", &data, &size);
             if (res != TCF_OK) {
@@ -63,7 +64,14 @@ namespace CE {
                 return;
             }
 
-            ok = CE::Ini::parse_memory(data, size, ini, &err, opts);
+            if (size > static_cast<uint64_t>(std::numeric_limits<size_t>::max())) {
+                TraceLog(LOG_ERROR, "CE-Bootstrap: Gameinfo.txt is too large to parse");
+                ShowError("CE-Bootstrap: Gameinfo.txt is too large to parse");
+                tcf_free(data);
+                return;
+            }
+
+            ok = CE::Ini::parse_memory(data, static_cast<size_t>(size), ini, &err, opts);
 
             tcf_free(data); // free after parsing
 
